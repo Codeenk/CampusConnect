@@ -48,77 +48,251 @@ const createMockSupabase = () => {
         }
       };
 
-      return {
-        select: (fields = '*') => ({
-          eq: (field, value) => ({
-            eq: (field2, value2) => ({
-              single: async () => {
-                const data = getTableData();
-                for (const [id, item] of data) {
-                  if (item[field] === value && item[field2] === value2) {
-                    return { data: item, error: null };
+      const createQueryBuilder = (conditions = []) => ({
+        eq: (field, value) => {
+          const newConditions = [...conditions, { field, value, op: 'eq' }];
+          return createQueryBuilder(newConditions);
+        },
+        or: (query) => {
+          const newConditions = [...conditions, { query, op: 'or' }];
+          return createQueryBuilder(newConditions);
+        },
+        gte: (field, value) => {
+          const newConditions = [...conditions, { field, value, op: 'gte' }];
+          return createQueryBuilder(newConditions);
+        },
+        range: (from, to) => ({
+          ...createQueryBuilder(conditions),
+          order: (field, options = {}) => ({
+            then: async (callback) => {
+              const data = getTableData();
+              let results = Array.from(data.values());
+              
+              // Apply conditions
+              results = results.filter(item => {
+                return conditions.every(condition => {
+                  if (condition.op === 'eq') {
+                    return item[condition.field] === condition.value;
+                  } else if (condition.op === 'gte') {
+                    const itemDate = new Date(item[condition.field]);
+                    const compareDate = new Date(condition.value);
+                    return itemDate >= compareDate;
+                  } else if (condition.op === 'or') {
+                    // Handle or conditions for messages
+                    if (condition.query.includes('sender_id') && condition.query.includes('receiver_id')) {
+                      const userIdMatches = condition.query.match(/\d+/g);
+                      if (userIdMatches && userIdMatches.length >= 2) {
+                        const [userId1, userId2] = userIdMatches;
+                        return (item.sender_id === userId1 && item.receiver_id === userId2) ||
+                               (item.sender_id === userId2 && item.receiver_id === userId1);
+                      }
+                    }
+                    return true;
                   }
-                }
-                return { data: null, error: { message: 'Not found' } };
-              },
-              then: async (callback) => {
-                const data = getTableData();
-                const results = Array.from(data.values()).filter(item => 
-                  item[field] === value && item[field2] === value2
-                );
-                return callback({ data: results, error: null });
-              }
-            }),
-            single: async () => {
-              const data = getTableData();
-              for (const [id, item] of data) {
-                if (item[field] === value) {
-                  return { data: item, error: null };
-                }
-              }
-              return { data: null, error: { message: 'Not found' } };
-            },
-            then: async (callback) => {
-              const data = getTableData();
-              const results = Array.from(data.values()).filter(item => item[field] === value);
-              return callback({ data: results, error: null });
-            }
-          }),
-          gte: (field, value) => ({
-            then: async (callback) => {
-              const data = getTableData();
-              const results = Array.from(data.values()).filter(item => {
-                const itemDate = new Date(item[field]);
-                const compareDate = new Date(value);
-                return itemDate >= compareDate;
+                  return true;
+                });
               });
-              return callback({ data: results, error: null });
-            }
-          }),
-          single: async () => {
-            const data = getTableData();
-            const first = data.values().next().value;
-            return { data: first || null, error: first ? null : { message: 'Not found' } };
-          },
-          order: () => ({
-            then: async (callback) => {
-              const data = Array.from(getTableData().values());
-              return callback({ data, error: null });
-            }
-          }),
-          range: () => ({
-            order: () => ({
-              then: async (callback) => {
-                const data = Array.from(getTableData().values());
-                return callback({ data, error: null });
+              
+              // Apply ordering
+              if (field && options.ascending === false) {
+                results.sort((a, b) => new Date(b[field]) - new Date(a[field]));
+              } else if (field) {
+                results.sort((a, b) => new Date(a[field]) - new Date(b[field]));
               }
-            })
+              
+              return callback({ data: results.slice(from, to + 1), error: null });
+            }
           }),
           then: async (callback) => {
-            const data = Array.from(getTableData().values());
-            return callback({ data, error: null });
+            const data = getTableData();
+            let results = Array.from(data.values());
+            
+            // Apply conditions
+            results = results.filter(item => {
+              return conditions.every(condition => {
+                if (condition.op === 'eq') {
+                  return item[condition.field] === condition.value;
+                } else if (condition.op === 'gte') {
+                  const itemDate = new Date(item[condition.field]);
+                  const compareDate = new Date(condition.value);
+                  return itemDate >= compareDate;
+                } else if (condition.op === 'or') {
+                  // Handle or conditions for messages
+                  if (condition.query.includes('sender_id') && condition.query.includes('receiver_id')) {
+                    const userIdMatches = condition.query.match(/\d+/g);
+                    if (userIdMatches && userIdMatches.length >= 2) {
+                      const [userId1, userId2] = userIdMatches;
+                      return (item.sender_id === userId1 && item.receiver_id === userId2) ||
+                             (item.sender_id === userId2 && item.receiver_id === userId1);
+                    }
+                  }
+                  return true;
+                }
+                return true;
+              });
+            });
+            
+            return callback({ data: results.slice(from, to + 1), error: null });
           }
         }),
+        order: (field, options = {}) => ({
+          ...createQueryBuilder(conditions),
+          range: (from, to) => ({
+            then: async (callback) => {
+              const data = getTableData();
+              let results = Array.from(data.values());
+              
+              // Apply conditions
+              results = results.filter(item => {
+                return conditions.every(condition => {
+                  if (condition.op === 'eq') {
+                    return item[condition.field] === condition.value;
+                  } else if (condition.op === 'gte') {
+                    const itemDate = new Date(item[condition.field]);
+                    const compareDate = new Date(condition.value);
+                    return itemDate >= compareDate;
+                  } else if (condition.op === 'or') {
+                    // Handle or conditions for messages
+                    if (condition.query.includes('sender_id') && condition.query.includes('receiver_id')) {
+                      const userIdMatches = condition.query.match(/\d+/g);
+                      if (userIdMatches && userIdMatches.length >= 2) {
+                        const [userId1, userId2] = userIdMatches;
+                        return (item.sender_id === userId1 && item.receiver_id === userId2) ||
+                               (item.sender_id === userId2 && item.receiver_id === userId1);
+                      }
+                    }
+                    return true;
+                  }
+                  return true;
+                });
+              });
+              
+              // Apply ordering
+              if (field && options.ascending === false) {
+                results.sort((a, b) => new Date(b[field]) - new Date(a[field]));
+              } else if (field) {
+                results.sort((a, b) => new Date(a[field]) - new Date(b[field]));
+              }
+              
+              return callback({ data: results.slice(from, to + 1), error: null });
+            }
+          }),
+          then: async (callback) => {
+            const data = getTableData();
+            let results = Array.from(data.values());
+            
+            // Apply conditions
+            results = results.filter(item => {
+              return conditions.every(condition => {
+                if (condition.op === 'eq') {
+                  return item[condition.field] === condition.value;
+                } else if (condition.op === 'gte') {
+                  const itemDate = new Date(item[condition.field]);
+                  const compareDate = new Date(condition.value);
+                  return itemDate >= compareDate;
+                } else if (condition.op === 'or') {
+                  // Handle or conditions for messages
+                  if (condition.query.includes('sender_id') && condition.query.includes('receiver_id')) {
+                    const userIdMatches = condition.query.match(/\d+/g);
+                    if (userIdMatches && userIdMatches.length >= 2) {
+                      const [userId1, userId2] = userIdMatches;
+                      return (item.sender_id === userId1 && item.receiver_id === userId2) ||
+                             (item.sender_id === userId2 && item.receiver_id === userId1);
+                    }
+                  }
+                  return true;
+                }
+                return true;
+              });
+            });
+            
+            // Apply ordering
+            if (field && options.ascending === false) {
+              results.sort((a, b) => new Date(b[field]) - new Date(a[field]));
+            } else if (field) {
+              results.sort((a, b) => new Date(a[field]) - new Date(b[field]));
+            }
+            
+            return callback({ data: results, error: null });
+          }
+        }),
+        single: async () => {
+          const data = getTableData();
+          for (const [id, item] of data) {
+            const matches = conditions.every(condition => {
+              if (condition.op === 'eq') {
+                return item[condition.field] === condition.value;
+              } else if (condition.op === 'gte') {
+                const itemDate = new Date(item[condition.field]);
+                const compareDate = new Date(condition.value);
+                return itemDate >= compareDate;
+              } else if (condition.op === 'or') {
+                // Handle or conditions for messages
+                if (condition.query.includes('sender_id') && condition.query.includes('receiver_id')) {
+                  const userIdMatches = condition.query.match(/\d+/g);
+                  if (userIdMatches && userIdMatches.length >= 2) {
+                    const [userId1, userId2] = userIdMatches;
+                    return (item.sender_id === userId1 && item.receiver_id === userId2) ||
+                           (item.sender_id === userId2 && item.receiver_id === userId1);
+                  }
+                }
+                return true;
+              }
+              return true;
+            });
+            
+            if (matches) {
+              return { data: item, error: null };
+            }
+          }
+          return { data: null, error: null };
+        },
+        then: async (callback) => {
+          const data = getTableData();
+          let results = Array.from(data.values());
+          
+          // Apply conditions
+          results = results.filter(item => {
+            return conditions.every(condition => {
+              if (condition.op === 'eq') {
+                return item[condition.field] === condition.value;
+              } else if (condition.op === 'gte') {
+                const itemDate = new Date(item[condition.field]);
+                const compareDate = new Date(condition.value);
+                return itemDate >= compareDate;
+              } else if (condition.op === 'or') {
+                // Handle or conditions for messages
+                if (condition.query.includes('sender_id') && condition.query.includes('receiver_id')) {
+                  const userIdMatches = condition.query.match(/\d+/g);
+                  if (userIdMatches && userIdMatches.length >= 2) {
+                    const [userId1, userId2] = userIdMatches;
+                    return (item.sender_id === userId1 && item.receiver_id === userId2) ||
+                           (item.sender_id === userId2 && item.receiver_id === userId1);
+                  }
+                }
+                return true;
+              }
+              return true;
+            });
+          });
+          
+          return callback({ data: results, error: null });
+        }
+      });
+
+      return {
+        select: (fields = '*', options = {}) => {
+          if (options.count === 'exact' && options.head === true) {
+            return {
+              then: async (callback) => {
+                const data = getTableData();
+                const count = data.size;
+                return callback({ count, error: null });
+              }
+            };
+          }
+          return createQueryBuilder();
+        },
         insert: (data) => ({
           select: () => ({
             single: async () => {
@@ -162,34 +336,19 @@ const createMockSupabase = () => {
             })
           })
         }),
-        delete: () => ({
-          eq: (field, value) => ({
-            eq: (field2, value2) => ({
-              then: async (callback) => {
-                const tableData = getTableData();
-                for (const [id, item] of tableData) {
-                  if (item[field] === value && item[field2] === value2) {
-                    tableData.delete(id);
-                    return callback({ error: null });
-                  }
-                }
-                return callback({ error: { message: 'Not found' } });
-              }
-            }),
-            then: async (callback) => {
-              const tableData = getTableData();
-              for (const [id, item] of tableData) {
-                if (item[field] === value) {
-                  tableData.delete(id);
-                  return callback({ error: null });
-                }
-              }
-              return callback({ error: { message: 'Not found' } });
-            }
-          })
-        })
+        delete: () => createQueryBuilder()
       };
-    }
+    },
+    rpc: (functionName, params) => ({
+      then: async (callback) => {
+        // Mock RPC function for get_user_conversations
+        if (functionName === 'get_user_conversations') {
+          const conversations = []; // Return empty for mock
+          return callback({ data: conversations, error: null });
+        }
+        return callback({ data: null, error: { message: 'RPC function not found' } });
+      }
+    })
   };
 };
 

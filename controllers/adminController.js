@@ -134,7 +134,7 @@ const getStatistics = async (req, res) => {
           students: userStats?.student || 0,
           faculty: userStats?.faculty || 0,
           admins: userStats?.admin || 0,
-          recent: recentUsers || 0
+          recent: recentUsersData?.length || 0
         },
         posts: {
           total: totalPosts || 0,
