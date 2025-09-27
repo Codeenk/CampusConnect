@@ -29,7 +29,7 @@ CREATE TYPE public.message_status AS ENUM ('sent', 'delivered', 'read');
 -- ========================================
 CREATE TABLE public.profiles (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE UNIQUE NOT NULL,
+  user_id uuid UNIQUE NOT NULL,
   name text NOT NULL CHECK (char_length(name) >= 2 AND char_length(name) <= 100),
   email text UNIQUE NOT NULL CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'),
   role user_role NOT NULL DEFAULT 'student',
@@ -59,6 +59,10 @@ CREATE TABLE public.profiles (
   created_at timestamptz DEFAULT now() NOT NULL,
   updated_at timestamptz DEFAULT now() NOT NULL
 );
+
+-- Add foreign key constraint to auth.users
+ALTER TABLE public.profiles ADD CONSTRAINT profiles_user_id_fkey 
+FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
 
 -- ========================================
 -- POSTS TABLE (Projects/Content)
@@ -137,9 +141,12 @@ CREATE TABLE public.post_views (
   user_id uuid REFERENCES public.profiles(user_id) ON DELETE CASCADE,
   ip_address inet,
   user_agent text DEFAULT '',
-  viewed_at timestamptz DEFAULT now() NOT NULL,
-  UNIQUE(post_id, user_id, DATE(viewed_at))
+  viewed_at timestamptz DEFAULT now() NOT NULL
 );
+
+-- Create unique index on post_id, user_id, and date part of viewed_at
+CREATE UNIQUE INDEX IF NOT EXISTS idx_post_views_unique_daily 
+ON public.post_views (post_id, user_id, DATE(viewed_at));
 
 -- ========================================
 -- ENDORSEMENTS SYSTEM
@@ -244,40 +251,40 @@ CREATE TABLE public.system_metrics (
 -- ========================================
 
 -- Profiles indexes
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_profiles_user_id ON public.profiles(user_id);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_profiles_email ON public.profiles(email);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_profiles_role ON public.profiles(role);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_profiles_department ON public.profiles(department);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_profiles_created_at ON public.profiles(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_profiles_user_id ON public.profiles(user_id);
+CREATE INDEX IF NOT EXISTS idx_profiles_email ON public.profiles(email);
+CREATE INDEX IF NOT EXISTS idx_profiles_role ON public.profiles(role);
+CREATE INDEX IF NOT EXISTS idx_profiles_department ON public.profiles(department);
+CREATE INDEX IF NOT EXISTS idx_profiles_created_at ON public.profiles(created_at DESC);
 
 -- Posts indexes
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_posts_created_by ON public.posts(created_by);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_posts_status ON public.posts(status);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_posts_created_at ON public.posts(created_at DESC);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_posts_likes_count ON public.posts(likes_count DESC);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_posts_tags ON public.posts USING GIN(tags);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_posts_category ON public.posts(category);
+CREATE INDEX IF NOT EXISTS idx_posts_created_by ON public.posts(created_by);
+CREATE INDEX IF NOT EXISTS idx_posts_status ON public.posts(status);
+CREATE INDEX IF NOT EXISTS idx_posts_created_at ON public.posts(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_posts_likes_count ON public.posts(likes_count DESC);
+CREATE INDEX IF NOT EXISTS idx_posts_tags ON public.posts USING GIN(tags);
+CREATE INDEX IF NOT EXISTS idx_posts_category ON public.posts(category);
 
 -- Post interactions indexes
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_post_likes_post_id ON public.post_likes(post_id);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_post_likes_user_id ON public.post_likes(user_id);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_post_comments_post_id ON public.post_comments(post_id);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_post_comments_user_id ON public.post_comments(user_id);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_post_views_post_id ON public.post_views(post_id);
+CREATE INDEX IF NOT EXISTS idx_post_likes_post_id ON public.post_likes(post_id);
+CREATE INDEX IF NOT EXISTS idx_post_likes_user_id ON public.post_likes(user_id);
+CREATE INDEX IF NOT EXISTS idx_post_comments_post_id ON public.post_comments(post_id);
+CREATE INDEX IF NOT EXISTS idx_post_comments_user_id ON public.post_comments(user_id);
+CREATE INDEX IF NOT EXISTS idx_post_views_post_id ON public.post_views(post_id);
 
 -- Endorsements indexes
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_endorsements_student_id ON public.endorsements(student_id);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_endorsements_faculty_id ON public.endorsements(faculty_id);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_endorsements_post_id ON public.endorsements(post_id);
+CREATE INDEX IF NOT EXISTS idx_endorsements_student_id ON public.endorsements(student_id);
+CREATE INDEX IF NOT EXISTS idx_endorsements_faculty_id ON public.endorsements(faculty_id);
+CREATE INDEX IF NOT EXISTS idx_endorsements_post_id ON public.endorsements(post_id);
 
 -- Messages indexes
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_messages_sender_receiver ON public.messages(sender_id, receiver_id);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_messages_receiver_unread ON public.messages(receiver_id, is_read, created_at DESC);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_messages_created_at ON public.messages(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_messages_sender_receiver ON public.messages(sender_id, receiver_id);
+CREATE INDEX IF NOT EXISTS idx_messages_receiver_unread ON public.messages(receiver_id, is_read, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_messages_created_at ON public.messages(created_at DESC);
 
 -- Notifications indexes
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_notifications_user_id ON public.notifications(user_id);
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_notifications_unread ON public.notifications(user_id, is_read, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON public.notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_unread ON public.notifications(user_id, is_read, created_at DESC);
 
 -- ========================================
 -- TRIGGERS AND FUNCTIONS
@@ -569,6 +576,10 @@ $$;
 -- SAMPLE DATA INSERTION
 -- ========================================
 
+-- Note: Sample data should be inserted manually after user registration
+-- The following is commented out to avoid conflicts with real user data
+
+/*
 -- Insert sample admin user (you should update this with real data)
 INSERT INTO public.profiles (
   user_id,
@@ -578,13 +589,14 @@ INSERT INTO public.profiles (
   department,
   bio
 ) VALUES (
-  '00000000-0000-0000-0000-000000000001',
+  uuid_generate_v4(),
   'Admin User',
-  'admin@campusconnect.com',
+  'admin@campusconnect.edu',
   'admin',
   'Administration',
   'System Administrator'
-) ON CONFLICT (user_id) DO NOTHING;
+) ON CONFLICT (email) DO NOTHING;
+*/
 
 -- ========================================
 -- FINAL GRANTS AND PERMISSIONS

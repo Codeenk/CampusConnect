@@ -106,7 +106,7 @@ const register = async (req, res) => {
       password: password,
       email_confirm: true,
       user_metadata: {
-        full_name: fullName.trim(),
+        name: fullName.trim(),
         role: role
       }
     });
@@ -140,9 +140,9 @@ const register = async (req, res) => {
 
     // Create profile in database
     const profileData = {
-      id: authData.user.id,
+      user_id: authData.user.id,
       email: normalizedEmail,
-      full_name: fullName.trim(),
+      name: fullName.trim(),
       role: role,
       ...(role === 'student' && {
         major: major.trim(),
