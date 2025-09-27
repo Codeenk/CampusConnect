@@ -36,7 +36,9 @@ CREATE TABLE public.profiles (
   
   -- Academic Information
   department text DEFAULT '',
+  major text DEFAULT '',
   year integer DEFAULT NULL CHECK (year IS NULL OR (year >= 1 AND year <= 10)),
+  graduation_year integer DEFAULT NULL CHECK (graduation_year IS NULL OR (graduation_year >= 2020 AND graduation_year <= 2050)),
   student_id text DEFAULT '',
   
   -- Profile Details
@@ -141,12 +143,13 @@ CREATE TABLE public.post_views (
   user_id uuid REFERENCES public.profiles(user_id) ON DELETE CASCADE,
   ip_address inet,
   user_agent text DEFAULT '',
-  viewed_at timestamptz DEFAULT now() NOT NULL
+  viewed_at timestamptz DEFAULT now() NOT NULL,
+  viewed_date date NOT NULL
 );
 
--- Create unique index on post_id, user_id, and date part of viewed_at
+-- Create unique index for one view per user per post per day
 CREATE UNIQUE INDEX IF NOT EXISTS idx_post_views_unique_daily 
-ON public.post_views (post_id, user_id, DATE(viewed_at));
+ON public.post_views (post_id, user_id, viewed_date);
 
 -- ========================================
 -- ENDORSEMENTS SYSTEM
@@ -378,6 +381,21 @@ $$;
 CREATE TRIGGER handle_post_views_count_trigger
   AFTER INSERT ON public.post_views
   FOR EACH ROW EXECUTE FUNCTION public.handle_post_views_count();
+
+-- Auto-set viewed_date from viewed_at
+CREATE OR REPLACE FUNCTION public.handle_post_views_date()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  NEW.viewed_date = DATE(NEW.viewed_at);
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER handle_post_views_date_trigger
+  BEFORE INSERT OR UPDATE ON public.post_views
+  FOR EACH ROW EXECUTE FUNCTION public.handle_post_views_date();
 
 -- ========================================
 -- ROW LEVEL SECURITY (RLS) POLICIES
@@ -618,8 +636,18 @@ GRANT ALL ON public.system_metrics TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_user_conversations(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.search_posts(text, user_role, text, integer, integer) TO authenticated;
 
--- Enable real-time subscriptions for specific tables
-ALTER PUBLICATION supabase_realtime ADD TABLE public.messages;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.post_likes;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.post_comments;
+-- Enable real-time subscriptions for specific tables (if publication exists)
+-- Note: These may need to be run manually in Supabase dashboard if publication doesn't exist
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_publication WHERE pubname = 'supabase_realtime') THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.messages;
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications;
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.post_likes;
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.post_comments;
+  END IF;
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE NOTICE 'Could not add tables to supabase_realtime publication: %', SQLERRM;
+END
+$$;
