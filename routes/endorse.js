@@ -6,7 +6,7 @@ const {
   getFacultyEndorsements,
   deleteEndorsement
 } = require('../controllers/endorseController');
-const { verifyToken, requireFaculty } = require('../middleware/auth');
+const auth = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -26,9 +26,9 @@ const endorsementValidation = [
 ];
 
 // Routes
-router.post('/', verifyToken, requireFaculty, endorsementValidation, createEndorsement);
-router.get('/student/:studentId', verifyToken, getStudentEndorsements);
-router.get('/faculty/my', verifyToken, requireFaculty, getFacultyEndorsements);
-router.delete('/:endorsementId', verifyToken, requireFaculty, deleteEndorsement);
+router.post('/', auth, auth.requireFaculty, endorsementValidation, createEndorsement);
+router.get('/student/:studentId', auth, getStudentEndorsements);
+router.get('/faculty/my', auth, auth.requireFaculty, getFacultyEndorsements);
+router.delete('/:endorsementId', auth, auth.requireFaculty, deleteEndorsement);
 
 module.exports = router;

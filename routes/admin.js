@@ -7,7 +7,7 @@ const {
   updateUserRole,
   deleteUser
 } = require('../controllers/adminController');
-const { verifyToken, requireAdmin } = require('../middleware/auth');
+const auth = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -19,7 +19,7 @@ const updateRoleValidation = [
 ];
 
 // Routes - All admin routes require admin authentication
-router.use(verifyToken, requireAdmin);
+router.use(auth, auth.requireAdmin);
 
 router.get('/users', getAllUsers);
 router.get('/statistics', getStatistics);

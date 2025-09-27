@@ -1,10 +1,11 @@
 const jwt = require('jsonwebtoken');
-const supabase = require('../config/supabase');
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
 /**
  * Middleware to verify JWT token and attach user data to request
  */
-const verifyToken = async (req, res, next) => {
+const auth = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
     
@@ -18,36 +19,37 @@ const verifyToken = async (req, res, next) => {
     const token = authHeader.substring(7); // Remove 'Bearer ' prefix
     
     // Verify JWT token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET);
     
-    // Get user profile from database
-    const { data: profile, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('user_id', decoded.userId)
-      .single();
-
-    if (error || !profile) {
+    if (!decoded.id || !decoded.email) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid token or user not found'
+        message: 'Invalid token format'
       });
     }
 
     // Attach user data to request
     req.user = {
-      id: decoded.userId,
+      id: decoded.id,
       email: decoded.email,
-      role: profile.role,
-      profile: profile
+      role: decoded.role
     };
 
+    console.log('Auth middleware: User authenticated:', decoded.email);
     next();
   } catch (error) {
     console.error('Auth middleware error:', error);
+    
+    let message = 'Invalid or expired token';
+    if (error.name === 'TokenExpiredError') {
+      message = 'Token has expired';
+    } else if (error.name === 'JsonWebTokenError') {
+      message = 'Invalid token';
+    }
+
     return res.status(401).json({
       success: false,
-      message: 'Invalid or expired token'
+      message: message
     });
   }
 };
@@ -93,10 +95,9 @@ const requireFaculty = requireRole(['faculty', 'admin']);
  */
 const requireStudent = requireRole(['student', 'faculty', 'admin']);
 
-module.exports = {
-  verifyToken,
-  requireRole,
-  requireAdmin,
-  requireFaculty,
-  requireStudent
-};
+module.exports = auth;
+module.exports.auth = auth;
+module.exports.requireRole = requireRole;
+module.exports.requireAdmin = requireAdmin;
+module.exports.requireFaculty = requireFaculty;
+module.exports.requireStudent = requireStudent;

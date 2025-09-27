@@ -9,7 +9,7 @@ const {
   likePost,
   commentPost
 } = require('../controllers/postController');
-const { verifyToken, requireStudent } = require('../middleware/auth');
+const auth = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -42,12 +42,12 @@ const commentValidation = [
 ];
 
 // Routes
-router.post('/create', verifyToken, requireStudent, postValidation, createPost);
-router.get('/feed', verifyToken, getFeed);
-router.get('/:postId', verifyToken, getPost);
-router.put('/:postId', verifyToken, postValidation, updatePost);
-router.delete('/:postId', verifyToken, deletePost);
-router.post('/:postId/like', verifyToken, likePost);
-router.post('/:postId/comment', verifyToken, commentValidation, commentPost);
+router.post('/create', auth, auth.requireStudent, postValidation, createPost);
+router.get('/feed', auth, getFeed);
+router.get('/:postId', auth, getPost);
+router.put('/:postId', auth, postValidation, updatePost);
+router.delete('/:postId', auth, deletePost);
+router.post('/:postId/like', auth, likePost);
+router.post('/:postId/comment', auth, commentValidation, commentPost);
 
 module.exports = router;

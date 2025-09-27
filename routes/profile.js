@@ -6,7 +6,7 @@ const {
   getAllProfiles,
   getProfileById
 } = require('../controllers/profileController');
-const { verifyToken } = require('../middleware/auth');
+const auth = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -46,9 +46,9 @@ const updateProfileValidation = [
 ];
 
 // Routes
-router.get('/me', verifyToken, getProfile);
-router.put('/update', verifyToken, updateProfileValidation, updateProfile);
-router.get('/all', verifyToken, getAllProfiles);
-router.get('/:userId', verifyToken, getProfileById);
+router.get('/me', auth, getProfile);
+router.put('/update', auth, updateProfileValidation, updateProfile);
+router.get('/all', auth, getAllProfiles);
+router.get('/:userId', auth, getProfileById);
 
 module.exports = router;

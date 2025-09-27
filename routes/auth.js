@@ -1,51 +1,108 @@
 const express = require('express');
-const { body } = require('express-validator');
-const { register, login, getMe } = require('../controllers/authController');
-const { verifyToken } = require('../middleware/auth');
-
 const router = express.Router();
+const { register, login, getMe, logout } = require('../controllers/authController');
+const auth = require('../middleware/auth');
 
-// Validation rules
-const registerValidation = [
-  body('name')
-    .trim()
-    .isLength({ min: 2, max: 100 })
-    .withMessage('Name must be between 2 and 100 characters'),
-  body('email')
-    .isEmail()
-    .normalizeEmail()
-    .withMessage('Please provide a valid email'),
-  body('password')
-    .isLength({ min: 6 })
-    .withMessage('Password must be at least 6 characters long'),
-  body('role')
-    .optional()
-    .isIn(['student', 'faculty', 'admin'])
-    .withMessage('Role must be one of: student, faculty, admin'),
-  body('department')
-    .optional()
-    .trim()
-    .isLength({ max: 100 })
-    .withMessage('Department must be less than 100 characters'),
-  body('year')
-    .optional()
-    .isInt({ min: 1, max: 10 })
-    .withMessage('Year must be a number between 1 and 10')
-];
+// Validation middleware
+const validateRegistration = (req, res, next) => {
+  const { fullName, email, password, role } = req.body;
+  
+  // Check required fields
+  if (!fullName?.trim()) {
+    return res.status(400).json({
+      success: false,
+      message: 'Full name is required'
+    });
+  }
+  
+  if (!email?.trim()) {
+    return res.status(400).json({
+      success: false,
+      message: 'Email is required'
+    });
+  }
+  
+  if (!password) {
+    return res.status(400).json({
+      success: false,
+      message: 'Password is required'
+    });
+  }
+  
+  // Validate email format
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email.trim())) {
+    return res.status(400).json({
+      success: false,
+      message: 'Please provide a valid email address'
+    });
+  }
+  
+  // Validate .edu domain
+  if (!email.trim().toLowerCase().endsWith('.edu')) {
+    return res.status(400).json({
+      success: false,
+      message: 'Only .edu email addresses are allowed'
+    });
+  }
+  
+  // Validate role
+  const validRoles = ['student', 'faculty', 'admin'];
+  if (role && !validRoles.includes(role)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid role specified'
+    });
+  }
+  
+  next();
+};
 
-const loginValidation = [
-  body('email')
-    .isEmail()
-    .normalizeEmail()
-    .withMessage('Please provide a valid email'),
-  body('password')
-    .notEmpty()
-    .withMessage('Password is required')
-];
+const validateLogin = (req, res, next) => {
+  const { email, password } = req.body;
+  
+  if (!email?.trim()) {
+    return res.status(400).json({
+      success: false,
+      message: 'Email is required'
+    });
+  }
+  
+  if (!password) {
+    return res.status(400).json({
+      success: false,
+      message: 'Password is required'
+    });
+  }
+  
+  // Validate email format
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email.trim())) {
+    return res.status(400).json({
+      success: false,
+      message: 'Please provide a valid email address'
+    });
+  }
+  
+  next();
+};
 
-// Routes
-router.post('/register', registerValidation, register);
-router.post('/login', loginValidation, login);
-router.get('/me', verifyToken, getMe);
+// Public routes
+router.post('/register', validateRegistration, register);
+router.post('/login', validateLogin, login);
+
+// Protected routes (require authentication)
+router.get('/me', auth, getMe);
+router.post('/logout', auth, logout);
+
+// Health check for auth service
+router.get('/health', (req, res) => {
+  res.json({
+    success: true,
+    service: 'authentication',
+    status: 'healthy',
+    timestamp: new Date().toISOString()
+  });
+});
 
 module.exports = router;

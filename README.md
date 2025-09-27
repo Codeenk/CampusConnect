@@ -1,33 +1,175 @@
-# 🚀 Campus Connect – Backend & Prototype Frontend
+# 🎓 Campus Connect
 
-**Campus Connect** is a platform designed to help students, faculty, and admins connect, collaborate, and share opportunities inside a campus ecosystem.  
-This repository currently contains the **backend service** and a **prototype frontend** for Phase 1 development.
+A modern, scalable social networking platform designed exclusively for college students, faculty, and administrators. Built with React, Express.js, and Supabase.
 
----
+## 🚀 Features
 
-## 📌 Phase 1 – Roles & Responsibilities
+### 👥 **User Management**
+- **Secure Authentication**: JWT-based authentication with .edu email validation
+- **Role-Based Access**: Student, Faculty, and Admin roles with appropriate permissions
+- **Profile Management**: Comprehensive user profiles with academic information
 
-### **Sarvesh Malandkar – Team Lead (Core Backend + Integration)**
-Handles almost all major API design, DB architecture, security, and joining of all parts.
+### 📱 **Social Features**
+- **News Feed**: Share updates, academic achievements, and campus events
+- **Messaging System**: Direct messaging between students and faculty
+- **Endorsements**: Faculty can endorse students for skills and achievements
+- **Posts & Comments**: Interactive content sharing with like and comment features
 
-**Tasks:**
-- **Project Initialization**
-  - Setup backend folder structure, Git repo
-  - Configure Express server, middlewares, CORS, `.env`
-- **Database Design**
-  - Build DB schema (users, projects, posts, messages)
-- **Auth System**
-  - JWT authentication
-  - Role-based access control (Student, Faculty, Admin)
-- **Profile API**
-  - CRUD for bio, skills, education, GitHub, etc.
-- **Post Feed APIs**
-  - Create/update/delete posts
-  - Like & comment system
-- **Faculty Endorsement Logic**
-  - Endpoint for faculty to endorse student projects
-- **Resume Export**
-  - Generate PDF resumes from student data
+### 🔐 **Security & Performance**
+- **Row Level Security (RLS)**: Database-level security policies
+- **Input Validation**: Comprehensive form validation and sanitization
+- **Optimized Queries**: Database indexing for scalable performance
+- **Real-time Updates**: Live notifications and messaging
+
+## 🏗️ Architecture
+
+### Frontend (React + Vite)
+- **React 18**: Modern React with hooks and context
+- **React Router**: Client-side routing
+- **Tailwind CSS**: Utility-first styling
+- **Axios**: HTTP client for API communication
+
+### Backend (Express.js)
+- **Express.js**: RESTful API server
+- **JWT Authentication**: Secure token-based authentication
+- **Supabase Integration**: PostgreSQL database with real-time features
+- **Middleware**: Authentication, validation, and error handling
+
+### Database (Supabase/PostgreSQL)
+- **Normalized Schema**: Proper database design with relationships
+- **Row Level Security**: User-based data access control
+- **Indexes**: Optimized for performance
+- **Triggers**: Automated database operations
+
+## 📦 Installation
+
+### Prerequisites
+- Node.js (v16 or higher)
+- npm or yarn
+- Supabase account
+
+### 1. Clone the Repository
+```bash
+git clone https://github.com/Codeenk/CampusConnect.git
+cd CampusConnect
+```
+
+### 2. Install Dependencies
+```bash
+npm install
+```
+
+### 3. Environment Setup
+```bash
+# Copy environment template
+cp .env.example .env
+
+# Edit .env with your actual values
+nano .env
+```
+
+### 4. Supabase Setup
+1. Create a new Supabase project at [supabase.com](https://supabase.com)
+2. Copy your project URL and API keys to `.env`
+3. Run the database migration in Supabase SQL Editor:
+   - Copy the content from `supabase/migrations/20250126120000_scalable_schema.sql`
+   - Execute it in your Supabase project
+
+### 5. Start Development Servers
+```bash
+# Start both frontend and backend
+npm run dev:all
+
+# Or start individually
+npm run dev        # Backend only (port 3001)
+npm run frontend   # Frontend only (port 3000)
+```
+
+## 🔧 Environment Variables
+
+```env
+# Environment
+NODE_ENV=development
+
+# Server Configuration
+PORT=3001
+
+# Supabase Configuration
+SUPABASE_URL=your_supabase_project_url
+SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_KEY=your_supabase_service_role_key
+
+# JWT Configuration
+JWT_SECRET=your-super-secret-jwt-key
+JWT_EXPIRES_IN=24h
+
+# Frontend URL (for CORS)
+FRONTEND_URL=http://localhost:3000
+```
+
+## 📁 Project Structure
+
+```
+CampusConnect/
+├── src/                          # Frontend React application
+│   ├── components/               # Reusable React components
+│   ├── contexts/                 # React context providers
+│   ├── pages/                    # Page components
+│   └── services/                 # API service functions
+├── controllers/                  # Express route controllers
+├── middleware/                   # Express middleware
+├── routes/                       # Express route definitions
+├── config/                       # Configuration files
+├── supabase/migrations/          # Database migrations
+├── server.js                     # Express server entry point
+├── package.json                  # Dependencies and scripts
+└── README.md                     # This file
+```
+
+## 🛣️ API Endpoints
+
+### Authentication
+- `POST /api/auth/register` - User registration
+- `POST /api/auth/login` - User login
+- `GET /api/auth/me` - Get current user
+- `POST /api/auth/logout` - User logout
+
+### Profiles
+- `GET /api/profile/me` - Get current user profile
+- `PUT /api/profile/update` - Update user profile
+- `GET /api/profile/all` - Get all profiles (admin)
+- `GET /api/profile/:userId` - Get specific user profile
+
+### Posts
+- `POST /api/posts/create` - Create new post
+- `GET /api/posts/feed` - Get user feed
+- `GET /api/posts/:postId` - Get specific post
+- `POST /api/posts/:postId/like` - Like/unlike post
+- `POST /api/posts/:postId/comment` - Add comment to post
+
+### Messages
+- `POST /api/messages/send` - Send message
+- `GET /api/messages/conversations` - Get conversations
+- `GET /api/messages/conversation/:userId` - Get conversation with user
+
+### Endorsements
+- `POST /api/endorse/` - Create endorsement (faculty only)
+- `GET /api/endorse/student/:studentId` - Get student endorsements
+- `GET /api/endorse/faculty/my` - Get faculty's endorsements
+
+## 🧪 Testing
+
+### Manual Testing
+1. Visit `http://localhost:3000`
+2. Register with a `.edu` email address
+3. Test login/logout functionality
+4. Create posts and interact with content
+5. Test messaging between users
+
+### Database Testing
+- Check Supabase dashboard for data integrity
+- Verify RLS policies are working
+- Monitor performance with query analyzer
 - **Admin Data Export**
   - Endpoint for placement cell to export profiles
 - **Testing**

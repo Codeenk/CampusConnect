@@ -7,7 +7,7 @@ const {
   getUnreadCount,
   markAsRead
 } = require('../controllers/messageController');
-const { verifyToken } = require('../middleware/auth');
+const auth = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -23,10 +23,10 @@ const messageValidation = [
 ];
 
 // Routes
-router.post('/send', verifyToken, messageValidation, sendMessage);
-router.get('/conversations', verifyToken, getConversations);
-router.get('/conversation/:userId', verifyToken, getConversation);
-router.get('/unread-count', verifyToken, getUnreadCount);
-router.put('/mark-read/:userId', verifyToken, markAsRead);
+router.post('/send', auth, messageValidation, sendMessage);
+router.get('/conversations', auth, getConversations);
+router.get('/conversation/:userId', auth, getConversation);
+router.get('/unread-count', auth, getUnreadCount);
+router.put('/mark-read/:userId', auth, markAsRead);
 
 module.exports = router;
