@@ -253,34 +253,27 @@ const getAllProfiles = async (req, res) => {
 const getProfileById = async (req, res) => {
   try {
     const { userId } = req.params;
+    console.log('=== Get Profile By ID Request ===')
+    console.log('Requested User ID:', userId)
+    console.log('Requesting User ID:', req.user.id)
 
     const { data: profile, error } = await supabase
       .from('profiles')
-      .select(`
-        id,
-        user_id,
-        name,
-        role,
-        bio,
-        department,
-        year,
-        skills,
-        github_url,
-        achievements,
-        created_at,
-        updated_at
-      `)
+      .select('*')
       .eq('user_id', userId)
       .single();
 
     if (error) {
-      console.error('Get profile by ID error:', error);
+      console.error('❌ Get profile by ID error:', error);
       return res.status(404).json({
         success: false,
         message: 'Profile not found',
         error: error.message
       });
     }
+
+    console.log('✅ Profile fetched successfully for user:', userId)
+    console.log('Profile data keys:', Object.keys(profile))
 
     res.json({
       success: true,

@@ -692,24 +692,24 @@ const Profile = () => {
     fetchProfile()
   }, [userId, currentUser?.id])
 
-  // Auto-refresh profile when viewing someone else's profile (every 10 seconds)
-  useEffect(() => {
-    let intervalId = null
-    
-    if (!isOwnProfile && userId) {
-      // Only auto-refresh when viewing someone else's profile
-      intervalId = setInterval(() => {
-        console.log('Auto-refreshing profile for user:', userId)
-        fetchProfile()
-      }, 10000) // Refresh every 10 seconds
-    }
-    
-    return () => {
-      if (intervalId) {
-        clearInterval(intervalId)
-      }
-    }
-  }, [isOwnProfile, userId])
+  // Auto-refresh disabled per user request
+  // useEffect(() => {
+  //   let intervalId = null
+  //   
+  //   if (!isOwnProfile && userId) {
+  //     // Only auto-refresh when viewing someone else's profile
+  //     intervalId = setInterval(() => {
+  //       console.log('Auto-refreshing profile for user:', userId)
+  //       fetchProfile()
+  //     }, 5000) // Refresh every 5 seconds
+  //   }
+  //   
+  //   return () => {
+  //     if (intervalId) {
+  //       clearInterval(intervalId)
+  //     }
+  //   }
+  // }, [isOwnProfile, userId])
 
   // Helper functions for experience and projects (still stored in achievements)
   const getExperienceFromAchievements = (achievements) => {
@@ -993,7 +993,9 @@ const Profile = () => {
         // Fetch other user's profile or own profile in read-only mode
         const targetUserId = userId || currentUser?.id
         console.log('Fetching profile for user:', targetUserId)
-        profileResponse = await api.get(`/profile/${targetUserId}`)
+        // Add cache-busting parameter to ensure fresh data
+        const timestamp = Date.now()
+        profileResponse = await api.get(`/profile/${targetUserId}?t=${timestamp}`)
       }
       
       console.log('Profile response:', profileResponse.data)
@@ -1692,6 +1694,7 @@ const Profile = () => {
             <EditableField 
               label="Department"
               value={profile?.department}
+              rawValue={profile?.department || ''}
               field="department"
               canEdit={canEdit}
               onSave={(value) => handleFieldSave('department', value)}
@@ -1702,6 +1705,7 @@ const Profile = () => {
             <EditableField 
               label="Major/Specialization"
               value={profile?.major}
+              rawValue={profile?.major || ''}
               field="major"
               canEdit={canEdit}
               onSave={(value) => handleFieldSave('major', value)}
@@ -1712,6 +1716,7 @@ const Profile = () => {
             <EditableField 
               label="Minor"
               value={profile?.minor}
+              rawValue={profile?.minor || ''}
               field="minor"
               canEdit={canEdit}
               onSave={(value) => handleFieldSave('minor', value)}
@@ -1722,6 +1727,7 @@ const Profile = () => {
             <EditableField 
               label="Current Year"
               value={profile?.year ? `${profile.year}${profile.year === 1 ? 'st' : profile.year === 2 ? 'nd' : profile.year === 3 ? 'rd' : 'th'} Year` : ''}
+              rawValue={profile?.year || ''}
               field="year"
               type="select"
               canEdit={canEdit}
@@ -1741,6 +1747,7 @@ const Profile = () => {
             <EditableField 
               label="Expected Graduation"
               value={profile?.graduation_year}
+              rawValue={profile?.graduation_year || ''}
               field="graduation_year"
               type="number"
               canEdit={canEdit}
@@ -1766,6 +1773,7 @@ const Profile = () => {
             <EditableField 
               label="Student ID"
               value={profile?.student_id}
+              rawValue={profile?.student_id || ''}
               field="student_id"
               canEdit={canEdit}
               onSave={(value) => handleFieldSave('student_id', value)}
@@ -1784,6 +1792,7 @@ const Profile = () => {
             <EditableField 
               label="Professional Headline"
               value={profile?.headline}
+              rawValue={profile?.headline || ''}
               field="headline"
               canEdit={canEdit}
               onSave={(value) => handleFieldSave('headline', value)}
@@ -1794,6 +1803,7 @@ const Profile = () => {
             <EditableField 
               label="Current Location"
               value={profile?.location}
+              rawValue={profile?.location || ''}
               field="location"
               canEdit={canEdit}
               onSave={(value) => handleFieldSave('location', value)}
@@ -1804,6 +1814,7 @@ const Profile = () => {
             <EditableField 
               label="Hometown"
               value={profile?.hometown}
+              rawValue={profile?.hometown || ''}
               field="hometown"
               canEdit={canEdit}
               onSave={(value) => handleFieldSave('hometown', value)}
@@ -1836,6 +1847,7 @@ const Profile = () => {
           <EditableField 
             label="Phone Number"
             value={profile?.phone_number}
+            rawValue={profile?.phone_number || ''}
             field="phone_number"
             type="tel"
             canEdit={canEdit}
@@ -1847,6 +1859,7 @@ const Profile = () => {
           <EditableField 
             label="Portfolio Website"
             value={profile?.portfolio_url}
+            rawValue={profile?.portfolio_url || ''}
             field="portfolio_url"
             type="url"
             canEdit={canEdit}
@@ -1858,6 +1871,7 @@ const Profile = () => {
           <EditableField 
             label="LinkedIn Profile"
             value={profile?.linkedin_url}
+            rawValue={profile?.linkedin_url || ''}
             field="linkedin_url"
             type="url"
             canEdit={canEdit}
@@ -1869,6 +1883,7 @@ const Profile = () => {
           <EditableField 
             label="GitHub Profile"
             value={profile?.github_url}
+            rawValue={profile?.github_url || ''}
             field="github_url"
             type="url"
             canEdit={canEdit}
