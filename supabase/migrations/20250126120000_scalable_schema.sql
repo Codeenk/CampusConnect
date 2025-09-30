@@ -7,8 +7,12 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- Drop existing tables if they exist (for fresh start)
+DROP TABLE IF EXISTS public.user_activity CASCADE;
+DROP TABLE IF EXISTS public.system_metrics CASCADE;
+DROP TABLE IF EXISTS public.notifications CASCADE;
 DROP TABLE IF EXISTS public.messages CASCADE;
 DROP TABLE IF EXISTS public.endorsements CASCADE;
+DROP TABLE IF EXISTS public.post_views CASCADE;
 DROP TABLE IF EXISTS public.post_comments CASCADE;
 DROP TABLE IF EXISTS public.post_likes CASCADE;
 DROP TABLE IF EXISTS public.posts CASCADE;
@@ -18,6 +22,15 @@ DROP TABLE IF EXISTS public.profiles CASCADE;
 DROP TYPE IF EXISTS public.user_role CASCADE;
 DROP TYPE IF EXISTS public.post_status CASCADE;
 DROP TYPE IF EXISTS public.message_status CASCADE;
+
+-- Drop existing functions if they exist
+DROP FUNCTION IF EXISTS public.handle_updated_at() CASCADE;
+DROP FUNCTION IF EXISTS public.handle_post_likes_count() CASCADE;
+DROP FUNCTION IF EXISTS public.handle_post_comments_count() CASCADE;
+DROP FUNCTION IF EXISTS public.handle_post_views_count() CASCADE;
+DROP FUNCTION IF EXISTS public.handle_post_views_date() CASCADE;
+DROP FUNCTION IF EXISTS public.get_user_conversations(uuid) CASCADE;
+DROP FUNCTION IF EXISTS public.search_posts(text, user_role, text, integer, integer) CASCADE;
 
 -- Create custom types
 CREATE TYPE public.user_role AS ENUM ('student', 'faculty', 'admin');

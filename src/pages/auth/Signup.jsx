@@ -33,8 +33,6 @@ const Signup = () => {
       errors.email = 'Email is required'
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
       errors.email = 'Please enter a valid email address'
-    } else if (!formData.email.trim().endsWith('.edu')) {
-      errors.email = 'Only .edu email addresses are allowed'
     }
     
     // Password validation
@@ -130,7 +128,7 @@ const Signup = () => {
             Create your account
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Join Campus Connect with your .edu email
+            Join Campus Connect with your email address
           </p>
         </div>
         
@@ -161,7 +159,7 @@ const Signup = () => {
             {/* Email */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email Address (.edu only)
+                Email Address
               </label>
               <input
                 id="email"
@@ -173,7 +171,7 @@ const Signup = () => {
                 className={`mt-1 appearance-none relative block w-full px-3 py-2 border ${
                   fieldErrors.email ? 'border-red-500' : 'border-gray-300'
                 } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm`}
-                placeholder="your.email@university.edu"
+                placeholder="your.email@example.com"
               />
               {fieldErrors.email && (
                 <p className="mt-1 text-sm text-red-600">{fieldErrors.email}</p>

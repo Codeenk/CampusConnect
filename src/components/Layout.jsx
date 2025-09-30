@@ -1,7 +1,6 @@
 import React from 'react'
 import { Outlet } from 'react-router-dom'
 import Sidebar from './Sidebar'
-import Header from './Header'
 
 const Layout = () => {
   return (
@@ -11,9 +10,6 @@ const Layout = () => {
       
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <Header />
-        
         {/* Page Content */}
         <main className="flex-1 overflow-y-auto">
           <div className="container mx-auto px-4 py-6 max-w-6xl">

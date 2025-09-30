@@ -38,14 +38,6 @@ const validateRegistration = (req, res, next) => {
     });
   }
   
-  // Validate .edu domain
-  if (!email.trim().toLowerCase().endsWith('.edu')) {
-    return res.status(400).json({
-      success: false,
-      message: 'Only .edu email addresses are allowed'
-    });
-  }
-  
   // Validate role
   const validRoles = ['student', 'faculty', 'admin'];
   if (role && !validRoles.includes(role)) {

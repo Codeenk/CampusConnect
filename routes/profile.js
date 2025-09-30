@@ -20,25 +20,102 @@ const updateProfileValidation = [
   body('bio')
     .optional()
     .trim()
-    .isLength({ max: 500 })
-    .withMessage('Bio must be less than 500 characters'),
+    .isLength({ max: 1000 })
+    .withMessage('Bio must be less than 1000 characters'),
   body('department')
     .optional()
     .trim()
     .isLength({ max: 100 })
     .withMessage('Department must be less than 100 characters'),
+  body('major')
+    .optional()
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage('Major must be less than 100 characters'),
   body('year')
     .optional()
-    .isInt({ min: 1, max: 10 })
+    .custom((value) => {
+      if (value === null || value === undefined || value === '') return true
+      const num = parseInt(value)
+      return num >= 1 && num <= 10
+    })
     .withMessage('Year must be a number between 1 and 10'),
+  body('graduation_year')
+    .optional()
+    .custom((value) => {
+      if (value === null || value === undefined || value === '') return true
+      const num = parseInt(value)
+      return num >= 2020 && num <= 2050
+    })
+    .withMessage('Graduation year must be between 2020 and 2050'),
+  body('headline')
+    .optional()
+    .isLength({ max: 200 })
+    .withMessage('Headline must be less than 200 characters'),
+  body('location')
+    .optional()
+    .isLength({ max: 100 })
+    .withMessage('Location must be less than 100 characters'),
+  body('hometown')
+    .optional()
+    .isLength({ max: 100 })
+    .withMessage('Hometown must be less than 100 characters'),
+  body('gpa')
+    .optional()
+    .custom((value) => {
+      if (value === null || value === undefined || value === '') return true
+      const num = parseFloat(value)
+      return num >= 0.0 && num <= 4.0
+    })
+    .withMessage('GPA must be between 0.0 and 4.0'),
+  body('minor')
+    .optional()
+    .isLength({ max: 100 })
+    .withMessage('Minor must be less than 100 characters'),
+  body('student_id')
+    .optional()
+    .trim()
+    .isLength({ max: 50 })
+    .withMessage('Student ID must be less than 50 characters'),
+  body('phone_number')
+    .optional()
+    .isMobilePhone()
+    .withMessage('Please provide a valid phone number'),
   body('github_url')
     .optional()
-    .isURL()
+    .custom((value) => {
+      if (value && value !== '') {
+        return /^https?:\/\/.+/.test(value)
+      }
+      return true
+    })
     .withMessage('GitHub URL must be a valid URL'),
+  body('linkedin_url')
+    .optional()
+    .custom((value) => {
+      if (value && value !== '') {
+        return /^https?:\/\/.+/.test(value)
+      }
+      return true
+    })
+    .withMessage('LinkedIn URL must be a valid URL'),
+  body('portfolio_url')
+    .optional()
+    .custom((value) => {
+      if (value && value !== '') {
+        return /^https?:\/\/.+/.test(value)
+      }
+      return true
+    })
+    .withMessage('Portfolio URL must be a valid URL'),
   body('skills')
     .optional()
     .isArray()
     .withMessage('Skills must be an array'),
+  body('interests')
+    .optional()
+    .isArray()
+    .withMessage('Interests must be an array'),
   body('achievements')
     .optional()
     .isArray()
@@ -47,7 +124,7 @@ const updateProfileValidation = [
 
 // Routes
 router.get('/me', auth, getProfile);
-router.put('/update', auth, updateProfileValidation, updateProfile);
+router.put('/me', auth, updateProfileValidation, updateProfile);
 router.get('/all', auth, getAllProfiles);
 router.get('/:userId', auth, getProfileById);
 

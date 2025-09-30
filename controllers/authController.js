@@ -1,6 +1,6 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { supabase } = require('../config/supabase');
+const supabase = require('../config/supabase');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
@@ -36,11 +36,11 @@ const register = async (req, res) => {
     // Normalize email
     const normalizedEmail = normalizeEmail(email);
 
-    // Validate .edu email
-    if (!normalizedEmail.endsWith('.edu')) {
+    // Basic email format validation
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
       return res.status(400).json({
         success: false,
-        message: 'Only .edu email addresses are allowed'
+        message: 'Please enter a valid email address'
       });
     }
 
@@ -144,9 +144,12 @@ const register = async (req, res) => {
       email: normalizedEmail,
       name: fullName.trim(),
       role: role,
-      ...(role === 'student' && {
-        major: major.trim(),
-        graduation_year: parseInt(graduationYear)
+      // Map major to department field and year to graduation year equivalent
+      ...(role === 'student' && major.trim() && {
+        department: major.trim()  // Use department field for major
+      }),
+      ...(role === 'student' && graduationYear && {
+        year: parseInt(graduationYear) - new Date().getFullYear() + 1  // Convert graduation year to current year in program
       }),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
@@ -261,7 +264,7 @@ const login = async (req, res) => {
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('*')
-      .eq('id', authData.user.id)
+      .eq('user_id', authData.user.id)
       .single();
 
     if (profileError || !profileData) {
@@ -332,7 +335,7 @@ const getMe = async (req, res) => {
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('*')
-      .eq('id', req.user.id)
+      .eq('user_id', req.user.id)
       .single();
 
     if (profileError) {

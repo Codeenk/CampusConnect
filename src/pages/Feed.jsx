@@ -14,21 +14,43 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    
+    // Frontend validation
+    if (formData.title.trim().length < 5 || formData.title.trim().length > 200) {
+      alert('Title must be between 5 and 200 characters')
+      return
+    }
+    
+    if (formData.description.trim().length < 10 || formData.description.trim().length > 2000) {
+      alert('Description must be between 10 and 2000 characters')
+      return
+    }
+    
     setLoading(true)
 
     try {
       const postData = {
-        title: formData.title,
-        description: formData.description,
+        title: formData.title.trim(),
+        description: formData.description.trim(),
         tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag)
       }
 
-      await api.post('/posts/create', postData)
+      console.log('Sending post data:', postData)
+      console.log('Title length:', postData.title.length)
+      console.log('Description length:', postData.description.length)
+      
+      const response = await api.post('/posts/create', postData)
+      console.log('Post created successfully:', response.data)
       onPostCreated()
       onClose()
       setFormData({ title: '', description: '', tags: '' })
     } catch (error) {
       console.error('Error creating post:', error)
+      console.error('Error response:', error.response?.data)
+      
+      // Show user-friendly error message
+      const errorMessage = error.response?.data?.message || error.response?.data?.errors?.[0]?.msg || 'Failed to create post'
+      alert(`Error: ${errorMessage}`)
     }
 
     setLoading(false)
@@ -56,18 +78,38 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated }) => {
             />
           </div>
 
+                    <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Title <span className="text-xs text-gray-500">({formData.title.length}/200 characters, min 5)</span>
+            </label>
+            <input
+              type="text"
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              className="input-field"
+              placeholder="Give your post a title..."
+              maxLength={200}
+            />
+            {formData.title.length > 0 && formData.title.length < 5 && (
+              <p className="text-red-500 text-xs mt-1">Title must be at least 5 characters</p>
+            )}
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Description
+              Description <span className="text-xs text-gray-500">({formData.description.length}/2000 characters, min 10)</span>
             </label>
             <textarea
-              required
-              rows={4}
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              rows={4}
               className="input-field resize-none"
-              placeholder="Describe your project..."
+              placeholder="Share your thoughts, projects, or ask questions..."
+              maxLength={2000}
             />
+            {formData.description.length > 0 && formData.description.length < 10 && (
+              <p className="text-red-500 text-xs mt-1">Description must be at least 10 characters</p>
+            )}
           </div>
 
           <div>
@@ -93,8 +135,8 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated }) => {
             </button>
             <button
               type="submit"
-              disabled={loading}
-              className="flex-1 btn-primary disabled:opacity-50"
+              disabled={loading || formData.title.trim().length < 5 || formData.description.trim().length < 10}
+              className="flex-1 btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Creating...' : 'Create Post'}
             </button>

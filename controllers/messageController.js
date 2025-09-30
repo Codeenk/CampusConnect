@@ -164,13 +164,32 @@ const getConversation = async (req, res) => {
 const getConversations = async (req, res) => {
   try {
     const currentUserId = req.user.id;
+    console.log('Fetching conversations for user:', currentUserId);
 
-    // Get latest message with each person
-    const { data: conversations, error } = await supabase
-      .rpc('get_user_conversations', { user_id: currentUserId });
+    // Use direct query instead of RPC function to avoid dependency issues
+    const { data: messages, error } = await supabase
+      .from('messages')
+      .select(`
+        id,
+        message,
+        created_at,
+        is_read,
+        sender_id,
+        receiver_id,
+        sender:profiles!sender_id (
+          name,
+          role
+        ),
+        receiver:profiles!receiver_id (
+          name,
+          role
+        )
+      `)
+      .or(`sender_id.eq.${currentUserId},receiver_id.eq.${currentUserId}`)
+      .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Get conversations error:', error);
+      console.error('Supabase query error:', error);
       return res.status(400).json({
         success: false,
         message: 'Failed to fetch conversations',
@@ -178,77 +197,50 @@ const getConversations = async (req, res) => {
       });
     }
 
+    console.log('Found messages:', messages?.length || 0);
+
+    // Group by conversation partner and get latest message
+    const conversationMap = new Map();
+    
+    messages.forEach(message => {
+      const partnerId = message.sender_id === currentUserId ? message.receiver_id : message.sender_id;
+      const partner = message.sender_id === currentUserId ? message.receiver : message.sender;
+      
+      if (!conversationMap.has(partnerId)) {
+        // Count unread messages for this partner
+        const unreadCount = messages.filter(m => 
+          m.sender_id === partnerId && 
+          m.receiver_id === currentUserId && 
+          !m.is_read
+        ).length;
+
+        conversationMap.set(partnerId, {
+          partner_id: partnerId,
+          partner_name: partner.name,
+          partner_role: partner.role,
+          last_message: message.message,
+          last_message_time: message.created_at,
+          unread_count: unreadCount
+        });
+      }
+    });
+
+    const conversations = Array.from(conversationMap.values());
+    console.log('Processed conversations:', conversations.length);
+
     res.json({
       success: true,
       data: {
-        conversations: conversations || []
+        conversations
       }
     });
   } catch (error) {
     console.error('Get conversations error:', error);
-
-    // Fallback method if RPC doesn't exist
-    try {
-      const { data: messages, error: fallbackError } = await supabase
-        .from('messages')
-        .select(`
-          id,
-          message,
-          created_at,
-          is_read,
-          sender_id,
-          receiver_id,
-          sender:profiles!sender_id (
-            name,
-            role
-          ),
-          receiver:profiles!receiver_id (
-            name,
-            role
-          )
-        `)
-        .or(`sender_id.eq.${req.user.id},receiver_id.eq.${req.user.id}`)
-        .order('created_at', { ascending: false });
-
-      if (fallbackError) {
-        throw fallbackError;
-      }
-
-      // Group by conversation partner
-      const conversationMap = new Map();
-      
-      messages.forEach(message => {
-        const partnerId = message.sender_id === req.user.id ? message.receiver_id : message.sender_id;
-        const partner = message.sender_id === req.user.id ? message.receiver : message.sender;
-        
-        if (!conversationMap.has(partnerId)) {
-          conversationMap.set(partnerId, {
-            partner_id: partnerId,
-            partner_name: partner.name,
-            partner_role: partner.role,
-            last_message: message.message,
-            last_message_time: message.created_at,
-            unread_count: 0
-          });
-        }
-      });
-
-      const conversations = Array.from(conversationMap.values());
-
-      res.json({
-        success: true,
-        data: {
-          conversations
-        }
-      });
-    } catch (fallbackError) {
-      console.error('Fallback get conversations error:', fallbackError);
-      res.status(500).json({
-        success: false,
-        message: 'Internal server error',
-        error: fallbackError.message
-      });
-    }
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
   }
 };
 

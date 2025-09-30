@@ -1,13 +1,15 @@
 import React from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
+import { MessagesProvider } from './contexts/MessagesContext'
 import { useAuth } from './contexts/AuthContext'
 import Layout from './components/Layout'
+import ErrorBoundary from './components/ErrorBoundary'
 import Login from './pages/auth/Login'
 import Signup from './pages/auth/Signup'
 import Feed from './pages/Feed'
 import Profile from './pages/Profile'
-import EditProfile from './pages/EditProfile'
+import Settings from './pages/Settings'
 import Messages from './pages/Messages'
 import AdminDashboard from './pages/AdminDashboard'
 import LoadingSpinner from './components/LoadingSpinner'
@@ -69,8 +71,12 @@ function AppRoutes() {
       }>
         <Route index element={<Navigate to="/feed" replace />} />
         <Route path="feed" element={<Feed />} />
-        <Route path="profile/:userId?" element={<Profile />} />
-        <Route path="edit-profile" element={<EditProfile />} />
+        <Route path="profile/:userId?" element={
+          <ErrorBoundary>
+            <Profile />
+          </ErrorBoundary>
+        } />
+        <Route path="settings" element={<Settings />} />
         <Route path="messages" element={<Messages />} />
         <Route path="admin" element={
           <ProtectedRoute adminOnly>
@@ -88,11 +94,13 @@ function AppRoutes() {
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <div className="min-h-screen bg-gray-50">
-          <AppRoutes />
-        </div>
-      </Router>
+      <MessagesProvider>
+        <Router>
+          <div className="min-h-screen bg-gray-50">
+            <AppRoutes />
+          </div>
+        </Router>
+      </MessagesProvider>
     </AuthProvider>
   )
 }
