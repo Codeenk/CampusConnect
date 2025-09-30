@@ -65,14 +65,23 @@ export const AuthProvider = ({ children }) => {
         console.log('Registration successful:', user)
         return { success: true, user }
       } else {
-        return { success: false, error: response.data.message || 'Registration failed' }
+        return { 
+          success: false, 
+          error: response.data.message || 'Registration failed',
+          action: response.data.action || null
+        }
       }
     } catch (error) {
       console.error('Registration error:', error)
-      const errorMessage = error.response?.data?.message || 
-                          error.response?.data?.error || 
+      const errorData = error.response?.data
+      const errorMessage = errorData?.message || 
+                          errorData?.error || 
                           'Registration failed. Please try again.'
-      return { success: false, error: errorMessage }
+      return { 
+        success: false, 
+        error: errorMessage,
+        action: errorData?.action || null
+      }
     } finally {
       setLoading(false)
     }

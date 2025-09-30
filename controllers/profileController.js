@@ -72,12 +72,15 @@ const updateProfile = async (req, res) => {
       year, 
       graduation_year,
       student_id,
+      phone,
       phone_number,
       headline,
       location,
       hometown,
       gpa,
       minor,
+      avatar_url,
+      profile_image_url,
       skills, 
       interests,
       github_url,
@@ -96,12 +99,22 @@ const updateProfile = async (req, res) => {
     if (year !== undefined) updateData.year = parseInt(year) || null;
     if (graduation_year !== undefined) updateData.graduation_year = parseInt(graduation_year) || null;
     if (student_id !== undefined) updateData.student_id = student_id;
+    
+    // Handle phone number field (support both field names for compatibility)
     if (phone_number !== undefined) updateData.phone_number = phone_number;
+    if (phone !== undefined) updateData.phone = phone;
+    
     if (headline !== undefined) updateData.headline = headline;
     if (location !== undefined) updateData.location = location;
     if (hometown !== undefined) updateData.hometown = hometown;
     if (gpa !== undefined) updateData.gpa = gpa ? parseFloat(gpa) : null;
     if (minor !== undefined) updateData.minor = minor;
+    
+    // Handle image fields
+    if (avatar_url !== undefined) updateData.avatar_url = avatar_url;
+    if (profile_image_url !== undefined) updateData.profile_image_url = profile_image_url;
+    
+    // Handle arrays properly
     if (skills !== undefined) updateData.skills = Array.isArray(skills) ? skills : (skills ? [skills] : []);
     if (interests !== undefined) updateData.interests = Array.isArray(interests) ? interests : (interests ? [interests] : []);
     if (github_url !== undefined) updateData.github_url = github_url;

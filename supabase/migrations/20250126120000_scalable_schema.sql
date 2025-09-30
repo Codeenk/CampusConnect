@@ -57,12 +57,19 @@ CREATE TABLE public.profiles (
   -- Profile Details
   bio text DEFAULT '' CHECK (char_length(bio) <= 1000),
   avatar_url text DEFAULT '',
+  profile_image_url text DEFAULT '',
+  headline text DEFAULT '',
+  location text DEFAULT '',
+  hometown text DEFAULT '',
+  minor text DEFAULT '',
+  gpa numeric(3,2) DEFAULT NULL CHECK (gpa IS NULL OR (gpa >= 0.0 AND gpa <= 4.0)),
   skills jsonb DEFAULT '[]'::jsonb,
   interests jsonb DEFAULT '[]'::jsonb,
   achievements jsonb DEFAULT '[]'::jsonb,
   
   -- Contact Information
   phone text DEFAULT '',
+  phone_number text DEFAULT '',
   github_url text DEFAULT '',
   linkedin_url text DEFAULT '',
   portfolio_url text DEFAULT '',

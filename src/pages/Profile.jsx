@@ -713,9 +713,13 @@ const Profile = () => {
 
   // Helper functions for experience and projects (still stored in achievements)
   const getExperienceFromAchievements = (achievements) => {
-    if (!Array.isArray(achievements)) return []
+    console.log('Processing achievements for experiences:', achievements)
+    if (!Array.isArray(achievements)) {
+      console.log('Achievements is not an array:', typeof achievements, achievements)
+      return []
+    }
     
-    return achievements
+    const experiences = achievements
       .map(item => {
         // Handle both string and object formats
         let parsedItem = item
@@ -732,12 +736,19 @@ const Profile = () => {
       .filter(item => item && item.type === 'experience')
       .map(item => item.value)
       .filter(Boolean)
+    
+    console.log('Extracted experiences:', experiences)
+    return experiences
   }
   
   const getProjectsFromAchievements = (achievements) => {
-    if (!Array.isArray(achievements)) return []
+    console.log('Processing achievements for projects:', achievements)
+    if (!Array.isArray(achievements)) {
+      console.log('Achievements is not an array:', typeof achievements, achievements)
+      return []
+    }
     
-    return achievements
+    const projects = achievements
       .map(item => {
         // Handle both string and object formats
         let parsedItem = item
@@ -754,6 +765,9 @@ const Profile = () => {
       .filter(item => item && (item.type === 'projects' || item.type === 'project'))
       .map(item => item.value)
       .filter(Boolean)
+    
+    console.log('Extracted projects:', projects)
+    return projects
   }
 
   // Handle individual field save
@@ -797,7 +811,39 @@ const Profile = () => {
         return
       }
 
-      const updateData = { [field]: value }
+      let updateData = {}
+
+      // Handle fields that need to be stored in achievements (compatibility layer)
+      if (field === 'headline' || field === 'location') {
+        const currentAchievements = profile.achievements || []
+        
+        // Remove any existing entries for this field type
+        const filteredAchievements = currentAchievements.filter(item => {
+          if (typeof item === 'string') {
+            try {
+              const parsed = JSON.parse(item)
+              return parsed.type !== field
+            } catch (e) {
+              return true
+            }
+          }
+          return item.type !== field
+        })
+        
+        // Add the new value if it's not empty
+        const updatedAchievements = [...filteredAchievements]
+        if (value && value.trim()) {
+          updatedAchievements.push({
+            type: field,
+            value: value.trim()
+          })
+        }
+        
+        updateData = { achievements: updatedAchievements }
+      } else {
+        // Handle regular profile fields
+        updateData = { [field]: value }
+      }
       
       // Handle special field conversions and validation
       if (field === 'year' && value) {
@@ -861,7 +907,17 @@ const Profile = () => {
   const handleExperienceSave = async (experienceData) => {
     try {
       const currentAchievements = profile.achievements || []
-      const nonExpAchievements = currentAchievements.filter(item => !item.type || item.type !== 'experience')
+      const nonExpAchievements = currentAchievements.filter(item => {
+        if (typeof item === 'string') {
+          try {
+            const parsed = JSON.parse(item)
+            return parsed.type !== 'experience'
+          } catch (e) {
+            return true
+          }
+        }
+        return item.type !== 'experience'
+      })
       const currentExperiences = getExperienceFromAchievements(profile.achievements) || []
       
       let updatedExperiences
@@ -902,7 +958,17 @@ const Profile = () => {
   const handleProjectSave = async (projectData) => {
     try {
       const currentAchievements = profile.achievements || []
-      const nonProjAchievements = currentAchievements.filter(item => !item.type || item.type !== 'projects')
+      const nonProjAchievements = currentAchievements.filter(item => {
+        if (typeof item === 'string') {
+          try {
+            const parsed = JSON.parse(item)
+            return parsed.type !== 'project' && parsed.type !== 'projects'
+          } catch (e) {
+            return true
+          }
+        }
+        return item.type !== 'project' && item.type !== 'projects'
+      })
       const currentProjects = getProjectsFromAchievements(profile.achievements) || []
       
       let updatedProjects
@@ -919,7 +985,7 @@ const Profile = () => {
       
       // Convert back to achievements format
       const projectAchievements = updatedProjects.map(proj => ({
-        type: 'projects',
+        type: 'project',
         value: proj
       }))
       
@@ -1010,6 +1076,30 @@ const Profile = () => {
         throw new Error('No profile data found')
       }
       
+      // Extract headline and location from achievements (compatibility layer)
+      const achievements = profileData.achievements || []
+      let headline = profileData.headline || ''
+      let location = profileData.location || ''
+      
+      // Look for headline and location in achievements
+      achievements.forEach(item => {
+        let parsedItem = item
+        if (typeof item === 'string') {
+          try {
+            parsedItem = JSON.parse(item)
+          } catch (e) {
+            return
+          }
+        }
+        
+        if (parsedItem && parsedItem.type === 'headline' && parsedItem.value) {
+          headline = parsedItem.value
+        }
+        if (parsedItem && parsedItem.type === 'location' && parsedItem.value) {
+          location = parsedItem.value
+        }
+      })
+
       // Initialize profile with ALL database fields
       setProfile({
         // Basic Info
@@ -1019,8 +1109,8 @@ const Profile = () => {
         role: profileData.role || 'student',
         bio: profileData.bio || '',
         avatar_url: profileData.avatar_url || '',
-        headline: profileData.headline || '',
-        location: profileData.location || '',
+        headline: headline,
+        location: location,
         
         // Academic Info
         department: profileData.department || '',
@@ -1059,6 +1149,8 @@ const Profile = () => {
       
       // Debug logging
       console.log('Raw achievements:', profileData.achievements)
+      console.log('Extracted headline:', headline)
+      console.log('Extracted location:', location)
       console.log('Parsed experiences:', getExperienceFromAchievements(profileData.achievements))
       console.log('Parsed projects:', getProjectsFromAchievements(profileData.achievements))
     } catch (error) {
@@ -1131,7 +1223,9 @@ const Profile = () => {
           headline: data.headline || '',
           location: data.location || '',
           hometown: data.hometown || '',
-          student_id: data.student_id || ''
+          student_id: data.student_id || '',
+          avatar_url: data.avatar_url || '',
+          profile_image_url: data.profile_image_url || ''
         }
         
         // Only add numeric fields if they have values
@@ -1152,7 +1246,8 @@ const Profile = () => {
           portfolio_url: data.portfolio_url || '',
           linkedin_url: data.linkedin_url || '',
           github_url: data.github_url || '',
-          phone_number: data.phone_number || ''
+          phone_number: data.phone_number || '',
+          phone: data.phone_number || '' // Support both field names for compatibility
         }
       } else if (section === 'skills') {
         updateData = { 
@@ -1365,11 +1460,28 @@ const Profile = () => {
         <div className="px-6 pb-6">
           {/* Avatar */}
           <div className="relative -mt-16 mb-4">
-            <div className="w-32 h-32 rounded-full border-4 border-white bg-gray-300 flex items-center justify-center text-4xl font-bold text-gray-600 shadow-lg">
-              {profile.name?.charAt(0) || 'U'}
-            </div>
+            {profile?.profile_image_url || profile?.avatar_url ? (
+              <img
+                src={profile?.profile_image_url || profile?.avatar_url}
+                alt={profile.name}
+                className="w-32 h-32 rounded-full border-4 border-white shadow-lg object-cover"
+              />
+            ) : (
+              <div className="w-32 h-32 rounded-full border-4 border-white bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-4xl font-bold text-white shadow-lg">
+                {profile.name?.charAt(0)?.toUpperCase() || 'U'}
+              </div>
+            )}
             {isOwnProfile && (
-              <button className="absolute bottom-0 right-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center hover:bg-blue-700">
+              <button 
+                onClick={() => {
+                  const imageUrl = prompt('Enter profile image URL:')
+                  if (imageUrl) {
+                    handleFieldSave('profile_image_url', imageUrl)
+                  }
+                }}
+                className="absolute bottom-0 right-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center hover:bg-blue-700 transition-colors"
+                title="Update profile picture"
+              >
                 <Camera className="w-4 h-4" />
               </button>
             )}
@@ -1520,6 +1632,38 @@ const Profile = () => {
                 </div>
               </div>
 
+              {/* Profile Image Section */}
+              <div className="bg-purple-50 p-4 rounded-lg">
+                <h3 className="text-md font-semibold text-gray-800 mb-3 flex items-center">
+                  <Camera className="w-4 h-4 mr-2" />
+                  Profile Picture
+                </h3>
+                <div className="space-y-2">
+                  <input
+                    type="url"
+                    value={editingData.profile_image_url || profile.profile_image_url || ''}
+                    onChange={(e) => setEditingData({...editingData, profile_image_url: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="https://example.com/your-profile-image.jpg"
+                  />
+                  <p className="text-xs text-gray-500">
+                    Add a URL to your profile picture (optional). Use a service like Imgur, Cloudinary, or your personal website.
+                  </p>
+                  {editingData.profile_image_url && (
+                    <div className="mt-2">
+                      <img
+                        src={editingData.profile_image_url}
+                        alt="Preview"
+                        className="w-20 h-20 rounded-full border-2 border-gray-300 object-cover"
+                        onError={(e) => {
+                          e.target.style.display = 'none'
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {/* About Section */}
               <div className="bg-green-50 p-4 rounded-lg">
                 <h3 className="text-md font-semibold text-gray-800 mb-3 flex items-center">
@@ -1608,7 +1752,9 @@ const Profile = () => {
                       graduation_year: profile.graduation_year,
                       gpa: profile.gpa,
                       hometown: profile.hometown,
-                      student_id: profile.student_id
+                      student_id: profile.student_id,
+                      profile_image_url: profile.profile_image_url,
+                      avatar_url: profile.avatar_url
                     })}
                     className="p-2 text-gray-600 hover:bg-gray-100 rounded-md"
                   >
@@ -1657,7 +1803,9 @@ const Profile = () => {
                 graduation_year: profile?.graduation_year || '',
                 gpa: profile?.gpa || '',
                 hometown: profile?.hometown || '',
-                student_id: profile?.student_id || ''
+                student_id: profile?.student_id || '',
+                profile_image_url: profile?.profile_image_url || '',
+                avatar_url: profile?.avatar_url || ''
               })}
               className="p-2 text-gray-600 hover:bg-gray-100 rounded-md"
             >
@@ -1920,30 +2068,40 @@ const Profile = () => {
             />
           )}
 
-          {profile?.experience && profile.experience.length > 0 ? (
-            profile.experience.map((exp, index) => (
-              <EditableExperienceItem
-                key={exp.id || index}
-                experience={exp}
-                canEdit={canEdit}
-                onSave={handleExperienceSave}
-                onDelete={deleteExperience}
-              />
-            ))
-          ) : !addingNewExperience ? (
-            <div className="text-center py-12">
-              <Briefcase className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500 text-lg mb-2">No experience added yet</p>
-              {canEdit && (
-                <button
-                  onClick={handleAddNewExperience}
-                  className="text-blue-600 hover:text-blue-800 font-medium"
-                >
-                  Add your first experience
-                </button>
-              )}
-            </div>
-          ) : null}
+          {(() => {
+            const experiences = getExperienceFromAchievements(profile?.achievements) || []
+            
+            if (experiences.length > 0) {
+              return experiences.map((exp, index) => (
+                <EditableExperienceItem
+                  key={exp.id || index}
+                  experience={exp}
+                  canEdit={canEdit}
+                  onSave={handleExperienceSave}
+                  onDelete={deleteExperience}
+                />
+              ))
+            }
+            
+            if (!addingNewExperience) {
+              return (
+                <div className="text-center py-12">
+                  <Briefcase className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500 text-lg mb-2">No experience added yet</p>
+                  {canEdit && (
+                    <button
+                      onClick={handleAddNewExperience}
+                      className="text-blue-600 hover:text-blue-800 font-medium"
+                    >
+                      Add your first experience
+                    </button>
+                  )}
+                </div>
+              )
+            }
+            
+            return null
+          })()}
         </div>
       </div>
 
@@ -1974,30 +2132,40 @@ const Profile = () => {
             />
           )}
 
-          {profile?.projects && profile.projects.length > 0 ? (
-            profile.projects.map((project, index) => (
-              <EditableProjectItem
-                key={project.id || index}
-                project={project}
-                canEdit={canEdit}
-                onSave={handleProjectSave}
-                onDelete={deleteProject}
-              />
-            ))
-          ) : !addingNewProject ? (
-            <div className="text-center py-12">
-              <Code2 className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500 text-lg mb-2">No projects added yet</p>
-              {canEdit && (
-                <button
-                  onClick={handleAddNewProject}
-                  className="text-blue-600 hover:text-blue-800 font-medium"
-                >
-                  Add your first project
-                </button>
-              )}
-            </div>
-          ) : null}
+          {(() => {
+            const projects = getProjectsFromAchievements(profile?.achievements) || []
+            
+            if (projects.length > 0) {
+              return projects.map((project, index) => (
+                <EditableProjectItem
+                  key={project.id || index}
+                  project={project}
+                  canEdit={canEdit}
+                  onSave={handleProjectSave}
+                  onDelete={deleteProject}
+                />
+              ))
+            }
+            
+            if (!addingNewProject) {
+              return (
+                <div className="text-center py-12">
+                  <Code2 className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500 text-lg mb-2">No projects added yet</p>
+                  {canEdit && (
+                    <button
+                      onClick={handleAddNewProject}
+                      className="text-blue-600 hover:text-blue-800 font-medium"
+                    >
+                      Add your first project
+                    </button>
+                  )}
+                </div>
+              )
+            }
+            
+            return null
+          })()}
         </div>
       </div>
 

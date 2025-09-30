@@ -114,7 +114,19 @@ const Signup = () => {
       navigate('/feed')
     } else {
       console.error('Registration failed:', result.error)
-      setError(result.error || 'Registration failed. Please try again.')
+      
+      // Check if the error suggests logging in instead
+      if (result.error?.includes('Please try logging in') || result.action === 'login') {
+        setError({
+          message: result.error || 'Account already exists. Please try logging in instead.',
+          action: 'login'
+        })
+      } else {
+        setError({
+          message: result.error || 'Registration failed. Please try again.',
+          action: null
+        })
+      }
     }
     
     setLoading(false)
@@ -289,7 +301,19 @@ const Signup = () => {
 
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-md p-3">
-              <div className="text-sm text-red-700">{error}</div>
+              <div className="text-sm text-red-700">
+                {typeof error === 'string' ? error : error.message}
+              </div>
+              {typeof error === 'object' && error.action === 'login' && (
+                <div className="mt-2">
+                  <Link
+                    to="/login"
+                    className="inline-flex items-center px-3 py-1 text-xs font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 transition-colors"
+                  >
+                    Go to Login Page
+                  </Link>
+                </div>
+              )}
             </div>
           )}
 

@@ -88,14 +88,22 @@ const register = async (req, res) => {
     // Check if user already exists in profiles table
     const { data: existingProfile, error: checkError } = await supabase
       .from('profiles')
-      .select('id')
+      .select('id, user_id')
       .eq('email', normalizedEmail)
-      .single();
+      .maybeSingle();
+
+    if (checkError && checkError.code !== 'PGRST116') {
+      console.error('Error checking existing profile:', checkError);
+      return res.status(500).json({
+        success: false,
+        message: 'Database error during registration'
+      });
+    }
 
     if (existingProfile) {
       return res.status(409).json({
         success: false,
-        message: 'User already exists with this email'
+        message: 'User already exists with this email. Please try logging in instead.'
       });
     }
 
@@ -115,11 +123,29 @@ const register = async (req, res) => {
       console.error('Supabase auth creation error:', authError);
       
       // Handle specific error cases
-      if (authError.message?.includes('already registered')) {
-        return res.status(409).json({
-          success: false,
-          message: 'User already exists with this email'
-        });
+      if (authError.message?.includes('already registered') || authError.code === 'email_exists') {
+        // Check if this user has a profile
+        const { data: orphanedProfile } = await supabase
+          .from('profiles')
+          .select('user_id')
+          .eq('email', normalizedEmail)
+          .maybeSingle();
+
+        if (!orphanedProfile) {
+          // User exists in auth but no profile - they should try logging in (our login will create profile)
+          return res.status(409).json({
+            success: false,
+            message: 'Account exists but incomplete setup. Please try logging in to complete your profile.',
+            action: 'login'
+          });
+        } else {
+          // User has both auth and profile - normal duplicate case
+          return res.status(409).json({
+            success: false,
+            message: 'User already exists with this email. Please try logging in instead.',
+            action: 'login'
+          });
+        }
       }
       
       return res.status(500).json({
@@ -138,22 +164,50 @@ const register = async (req, res) => {
 
     console.log('User created in Supabase Auth:', authData.user.id);
 
-    // Create profile in database
+    // Create comprehensive profile in database
     const profileData = {
       user_id: authData.user.id,
       email: normalizedEmail,
       name: fullName.trim(),
       role: role,
-      // Map major to department field and year to graduation year equivalent
-      ...(role === 'student' && major.trim() && {
-        department: major.trim()  // Use department field for major
-      }),
-      ...(role === 'student' && graduationYear && {
-        year: parseInt(graduationYear) - new Date().getFullYear() + 1  // Convert graduation year to current year in program
-      }),
+      bio: '',
+      headline: '',
+      location: '',
+      hometown: '',
+      avatar_url: '',
+      profile_image_url: '',
+      phone: '',
+      phone_number: '',
+      github_url: '',
+      linkedin_url: '',
+      portfolio_url: '',
+      skills: [],
+      interests: [],
+      achievements: [],
+      is_verified: false,
+      is_active: true,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
+
+    // Add student-specific fields
+    if (role === 'student') {
+      if (major && major.trim()) {
+        profileData.major = major.trim();
+        profileData.department = major.trim(); // Also set department for compatibility
+      }
+      if (graduationYear) {
+        const gradYear = parseInt(graduationYear);
+        profileData.graduation_year = gradYear;
+        // Calculate current year in program (1-4 typically)
+        const currentYear = new Date().getFullYear();
+        const yearInProgram = Math.max(1, Math.min(6, gradYear - currentYear + 1));
+        profileData.year = yearInProgram;
+      }
+      profileData.student_id = ''; // Will be filled later by student
+      profileData.gpa = null; // Will be filled later by student
+      profileData.minor = '';
+    }
 
     console.log('Creating profile:', profileData);
     
@@ -165,18 +219,36 @@ const register = async (req, res) => {
 
     if (profileError) {
       console.error('Profile creation error:', profileError);
+      console.error('Failed profile data:', profileData);
       
       // Clean up the auth user if profile creation fails
-      await supabase.auth.admin.deleteUser(authData.user.id);
+      try {
+        await supabase.auth.admin.deleteUser(authData.user.id);
+        console.log('Cleaned up auth user after profile creation failure');
+      } catch (cleanupError) {
+        console.error('Failed to cleanup auth user:', cleanupError);
+      }
       
       return res.status(500).json({
         success: false,
-        message: 'Failed to create user profile',
-        error: profileError.message
+        message: 'Failed to create user profile. Please try again.',
+        error: profileError.message,
+        details: profileError
+      });
+    }
+
+    if (!profileResult) {
+      console.error('Profile creation returned no data');
+      // Cleanup auth user
+      await supabase.auth.admin.deleteUser(authData.user.id);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to create user profile - no data returned'
       });
     }
 
     console.log('Profile created successfully:', profileResult.id);
+    console.log('Registration completed for user:', normalizedEmail);
 
     // Generate JWT token
     const token = generateToken({
@@ -260,38 +332,92 @@ const login = async (req, res) => {
       });
     }
 
-    // Get user profile
+    // Get user profile (use maybeSingle to handle missing profiles)
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('*')
       .eq('user_id', authData.user.id)
-      .single();
+      .maybeSingle();
 
-    if (profileError || !profileData) {
+    if (profileError) {
       console.error('Profile fetch error during login:', profileError);
       return res.status(500).json({
         success: false,
-        message: 'Failed to fetch user profile'
+        message: 'Database error while fetching profile',
+        error: profileError.message
       });
+    }
+
+    let finalProfile = profileData;
+
+    // If no profile exists, create one automatically
+    if (!profileData) {
+      console.log('No profile found for user, creating one...');
+      
+      const newProfileData = {
+        user_id: authData.user.id,
+        email: normalizedEmail,
+        name: authData.user.user_metadata?.name || authData.user.email?.split('@')[0] || 'User',
+        role: authData.user.user_metadata?.role || 'student',
+        bio: '',
+        department: '',
+        major: '',
+        minor: '',
+        year: null,
+        graduation_year: null,
+        student_id: '',
+        headline: '',
+        location: '',
+        hometown: '',
+        gpa: null,
+        phone_number: '',
+        profile_image_url: '',
+        skills: [],
+        interests: [],
+        achievements: [],
+        github_url: '',
+        linkedin_url: '',
+        portfolio_url: '',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      const { data: createdProfile, error: createError } = await supabase
+        .from('profiles')
+        .insert(newProfileData)
+        .select()
+        .single();
+
+      if (createError) {
+        console.error('Failed to create profile during login:', createError);
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to create user profile',
+          error: createError.message
+        });
+      }
+
+      console.log('Profile created successfully during login:', createdProfile.id);
+      finalProfile = createdProfile;
     }
 
     // Generate JWT token
     const token = generateToken({
       id: authData.user.id,
       email: normalizedEmail,
-      role: profileData.role
+      role: finalProfile.role
     });
 
     // Return success response
     res.json({
       success: true,
-      message: 'Login successful',
+      message: finalProfile === profileData ? 'Login successful' : 'Login successful (profile created)',
       data: {
         user: {
           id: authData.user.id,
           email: normalizedEmail,
-          role: profileData.role,
-          profile: profileData
+          role: finalProfile.role,
+          profile: finalProfile
         },
         token: token
       }
