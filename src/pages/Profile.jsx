@@ -1725,139 +1725,58 @@ const Profile = () => {
 
       {/* Contact Information Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="flex justify-between items-center mb-4">
+        <div className="mb-4">
           <h2 className="text-xl font-semibold text-gray-900 flex items-center">
             <Mail className="w-5 h-5 mr-2" />
             Contact Information
           </h2>
-          {canEdit && editingSection !== 'contact' && (
-            <button
-              onClick={() => startEditing('contact', {
-                phone_number: profile?.phone_number || '',
-                portfolio_url: profile?.portfolio_url || '',
-                linkedin_url: profile?.linkedin_url || '',
-                github_url: profile?.github_url || ''
-              })}
-              className="p-2 text-gray-600 hover:bg-gray-100 rounded-md"
-            >
-              <Edit3 className="w-4 h-4" />
-            </button>
-          )}
         </div>
 
-        {editingSection === 'contact' || true ? (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                <input
-                  type="tel"
-                  value={editingData.phone_number || ''}
-                  onChange={(e) => setEditingData({...editingData, phone_number: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="+1 (555) 123-4567"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Portfolio Website</label>
-                <input
-                  type="url"
-                  value={editingData.portfolio_url || ''}
-                  onChange={(e) => setEditingData({...editingData, portfolio_url: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="https://yourportfolio.com"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">LinkedIn Profile</label>
-                <input
-                  type="url"
-                  value={editingData.linkedin_url || ''}
-                  onChange={(e) => setEditingData({...editingData, linkedin_url: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="https://linkedin.com/in/username"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">GitHub Profile</label>
-                <input
-                  type="url"
-                  value={editingData.github_url || ''}
-                  onChange={(e) => setEditingData({...editingData, github_url: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="https://github.com/username"
-                />
-              </div>
-            </div>
-            <div className="flex space-x-2 pt-2">
-              <button
-                onClick={() => saveSection('contact', editingData)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center space-x-1"
-              >
-                <Save className="w-4 h-4" />
-                <span>Save</span>
-              </button>
-              <button
-                onClick={cancelEditing}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 flex items-center space-x-1"
-              >
-                <X className="w-4 h-4" />
-                <span>Cancel</span>
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {profile?.phone_number && (
-              <div className="flex items-center space-x-3 text-gray-700">
-                <Phone className="w-4 h-4" />
-                <span>{profile.phone_number}</span>
-              </div>
-            )}
-            {profile?.portfolio_url && (
-              <div className="flex items-center space-x-3 text-gray-700">
-                <Globe className="w-4 h-4" />
-                <a 
-                  href={profile.portfolio_url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline"
-                >
-                  Portfolio
-                </a>
-              </div>
-            )}
-            {profile?.linkedin_url && (
-              <div className="flex items-center space-x-3 text-gray-700">
-                <Linkedin className="w-4 h-4" />
-                <a 
-                  href={profile.linkedin_url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline"
-                >
-                  LinkedIn
-                </a>
-              </div>
-            )}
-            {profile?.github_url && (
-              <div className="flex items-center space-x-3 text-gray-700">
-                <Github className="w-4 h-4" />
-                <a 
-                  href={profile.github_url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline"
-                >
-                  GitHub
-                </a>
-              </div>
-            )}
-            {(!profile?.phone_number && !profile?.portfolio_url && !profile?.linkedin_url && !profile?.github_url) && (
-              <p className="text-gray-500 col-span-2">No contact information available.</p>
-            )}
-          </div>
-        )}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Phone Number Field */}
+          <EditableField 
+            label="Phone Number"
+            value={profile?.phone_number}
+            field="phone_number"
+            type="tel"
+            canEdit={canEdit}
+            onSave={(value) => handleFieldSave('phone_number', value)}
+            placeholder="+1 (555) 123-4567"
+          />
+          
+          {/* Portfolio URL Field */}
+          <EditableField 
+            label="Portfolio Website"
+            value={profile?.portfolio_url}
+            field="portfolio_url"
+            type="url"
+            canEdit={canEdit}
+            onSave={(value) => handleFieldSave('portfolio_url', value)}
+            placeholder="https://yourportfolio.com"
+          />
+          
+          {/* LinkedIn URL Field */}
+          <EditableField 
+            label="LinkedIn Profile"
+            value={profile?.linkedin_url}
+            field="linkedin_url"
+            type="url"
+            canEdit={canEdit}
+            onSave={(value) => handleFieldSave('linkedin_url', value)}
+            placeholder="https://linkedin.com/in/username"
+          />
+          
+          {/* GitHub URL Field */}
+          <EditableField 
+            label="GitHub Profile"
+            value={profile?.github_url}
+            field="github_url"
+            type="url"
+            canEdit={canEdit}
+            onSave={(value) => handleFieldSave('github_url', value)}
+            placeholder="https://github.com/username"
+          />
+        </div>
       </div>
 
       {/* Experience Section */}
