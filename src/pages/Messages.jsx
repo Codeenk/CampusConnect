@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useMessages } from '../contexts/MessagesContext'
 import api from '../services/api'
@@ -19,9 +19,22 @@ const Messages = () => {
   const [userSearchQuery, setUserSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState([])
   const [searchingUsers, setSearchingUsers] = useState(false)
+  const [isAutoRefreshing, setIsAutoRefreshing] = useState(false)
+  const messagesEndRef = useRef(null)
 
   useEffect(() => {
-    fetchConversations()
+    // Fetch conversations immediately
+    fetchConversations(false)
+    
+    // Set up auto-refresh for conversations every 5 seconds (less frequent than messages)
+    const conversationsInterval = setInterval(() => {
+      fetchConversations(true)
+    }, 5000)
+    
+    // Cleanup interval when component unmounts
+    return () => {
+      clearInterval(conversationsInterval)
+    }
   }, [])
 
   useEffect(() => {
@@ -54,8 +67,23 @@ const Messages = () => {
   }, [conversations, loading])
 
   useEffect(() => {
+    let intervalId = null
+    
     if (selectedConversation) {
-      fetchMessages(selectedConversation.partner_id)
+      // Fetch messages immediately when conversation is selected
+      fetchMessages(selectedConversation.partner_id, false)
+      
+      // Set up auto-refresh every 2 seconds
+      intervalId = setInterval(() => {
+        fetchMessages(selectedConversation.partner_id, true)
+      }, 2000)
+    }
+    
+    // Cleanup interval when conversation changes or component unmounts
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId)
+      }
     }
   }, [selectedConversation])
 
@@ -70,19 +98,48 @@ const Messages = () => {
     return () => clearTimeout(timeoutId)
   }, [userSearchQuery])
 
-  const fetchConversations = async () => {
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [messages])
+
+  const fetchConversations = async (isAutoRefresh = false) => {
     try {
       const response = await api.get('/messages/conversations')
-      setConversations(response.data.data.conversations || [])
+      const fetchedConversations = response.data.data.conversations || []
+      
+      // Check if we have changes in conversations to prevent unnecessary updates
+      if (isAutoRefresh && conversations.length > 0) {
+        const hasChanges = fetchedConversations.length !== conversations.length ||
+          fetchedConversations.some((conv, index) => {
+            const existingConv = conversations[index]
+            return !existingConv || 
+              conv.partner_id !== existingConv.partner_id || 
+              conv.last_message !== existingConv.last_message ||
+              conv.last_message_time !== existingConv.last_message_time
+          })
+        
+        if (!hasChanges) {
+          return // No changes, skip update
+        }
+      }
+      
+      setConversations(fetchedConversations)
     } catch (error) {
       console.error('Error fetching conversations:', error)
       console.error('Error response:', error.response?.data)
       console.error('Error status:', error.response?.status)
       
       // For now, set empty conversations to avoid crash
-      setConversations([])
+      if (!isAutoRefresh) {
+        setConversations([])
+      }
     } finally {
-      setLoading(false)
+      if (!isAutoRefresh) {
+        setLoading(false)
+      }
     }
   }
 
@@ -119,10 +176,28 @@ const Messages = () => {
     }
   }
 
-  const fetchMessages = async (userId) => {
+  const fetchMessages = async (userId, isAutoRefresh = false) => {
     try {
+      if (isAutoRefresh) {
+        setIsAutoRefreshing(true)
+      }
+      
       const response = await api.get(`/messages/conversation/${userId}`)
       const fetchedMessages = response.data.data.messages || []
+      
+      // Check if we have new messages to prevent unnecessary updates
+      if (isAutoRefresh && messages.length > 0) {
+        const hasNewMessages = fetchedMessages.length !== messages.length ||
+          fetchedMessages.some((msg, index) => {
+            const existingMsg = messages[index]
+            return !existingMsg || msg.id !== existingMsg.id || msg.is_read !== existingMsg.is_read
+          })
+        
+        if (!hasNewMessages) {
+          return // No new messages, skip update
+        }
+      }
+      
       setMessages(fetchedMessages)
       
       // Count unread messages for this conversation and update global count
@@ -137,6 +212,11 @@ const Messages = () => {
       
     } catch (error) {
       console.error('Error fetching messages:', error)
+    } finally {
+      if (isAutoRefresh) {
+        // Show indicator briefly, then hide
+        setTimeout(() => setIsAutoRefreshing(false), 500)
+      }
     }
   }
 
@@ -334,19 +414,32 @@ const Messages = () => {
           <>
             {/* Chat Header */}
             <div className="p-4 border-b border-gray-200 bg-gray-50">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                  <span className="text-white font-semibold text-sm">
-                    {selectedConversation.partner_name.charAt(0)}
-                  </span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                    <span className="text-white font-semibold text-sm">
+                      {selectedConversation.partner_name.charAt(0)}
+                    </span>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">
+                      {selectedConversation.partner_name}
+                    </h3>
+                    <p className="text-sm text-gray-500 capitalize">
+                      {selectedConversation.partner_role}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900">
-                    {selectedConversation.partner_name}
-                  </h3>
-                  <p className="text-sm text-gray-500 capitalize">
-                    {selectedConversation.partner_role}
-                  </p>
+                
+                {/* Live indicator */}
+                <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-1">
+                    <div className={`w-2 h-2 rounded-full ${isAutoRefreshing ? 'bg-green-500 animate-pulse' : 'bg-green-400'}`}></div>
+                    <span className="text-xs text-gray-500">Live</span>
+                  </div>
+                  {isAutoRefreshing && (
+                    <div className="text-xs text-blue-600 animate-pulse">Checking for new messages...</div>
+                  )}
                 </div>
               </div>
             </div>
@@ -383,6 +476,8 @@ const Messages = () => {
                   </div>
                 ))
               )}
+              {/* Auto-scroll anchor */}
+              <div ref={messagesEndRef} />
             </div>
 
             {/* Message Input */}
