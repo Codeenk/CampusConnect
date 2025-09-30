@@ -31,14 +31,16 @@ import {
 import LoadingSpinner from '../components/LoadingSpinner'
 
 // Editable Field Component for inline editing
-const EditableField = ({ label, value, field, type = 'text', canEdit, onSave, placeholder, options, inputProps = {} }) => {
+const EditableField = ({ label, value, field, type = 'text', canEdit, onSave, placeholder, options, inputProps = {}, rawValue }) => {
   const [isEditing, setIsEditing] = useState(false)
-  const [editValue, setEditValue] = useState(value || '')
+  const [editValue, setEditValue] = useState('')
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    setEditValue(value || '')
-  }, [value])
+    // Use rawValue for editing if provided, otherwise use the display value
+    const valueToEdit = rawValue !== undefined ? rawValue : value || ''
+    setEditValue(valueToEdit)
+  }, [value, rawValue])
 
   const handleSave = async () => {
     setSaving(true)
@@ -676,9 +678,38 @@ const Profile = () => {
   const isOwnProfile = !userId || userId === currentUser?.id
   const canEdit = isOwnProfile && !isReadOnlyMode
 
+  // Debug logging
+  console.log('Profile Debug Info:', {
+    userId: userId,
+    currentUserId: currentUser?.id,
+    isOwnProfile: isOwnProfile,
+    isReadOnlyMode: isReadOnlyMode,
+    canEdit: canEdit,
+    url: window.location.href
+  })
+
   useEffect(() => {
     fetchProfile()
   }, [userId, currentUser?.id])
+
+  // Auto-refresh profile when viewing someone else's profile (every 10 seconds)
+  useEffect(() => {
+    let intervalId = null
+    
+    if (!isOwnProfile && userId) {
+      // Only auto-refresh when viewing someone else's profile
+      intervalId = setInterval(() => {
+        console.log('Auto-refreshing profile for user:', userId)
+        fetchProfile()
+      }, 10000) // Refresh every 10 seconds
+    }
+    
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId)
+      }
+    }
+  }, [isOwnProfile, userId])
 
   // Helper functions for experience and projects (still stored in achievements)
   const getExperienceFromAchievements = (achievements) => {
@@ -728,17 +759,70 @@ const Profile = () => {
   // Handle individual field save
   const handleFieldSave = async (field, value) => {
     try {
+      // Client-side validation
+      if (field === 'name' && value && (value.trim().length < 2 || value.trim().length > 100)) {
+        alert('Name must be between 2 and 100 characters')
+        return
+      }
+      if (field === 'bio' && value && value.length > 1000) {
+        alert('Bio must be less than 1000 characters')
+        return
+      }
+      if (field === 'department' && value && value.length > 100) {
+        alert('Department must be less than 100 characters')
+        return
+      }
+      if (field === 'major' && value && value.length > 100) {
+        alert('Major must be less than 100 characters')
+        return
+      }
+      if (field === 'headline' && value && value.length > 200) {
+        alert('Headline must be less than 200 characters')
+        return
+      }
+      if (field === 'location' && value && value.length > 100) {
+        alert('Location must be less than 100 characters')
+        return
+      }
+      if (field === 'hometown' && value && value.length > 100) {
+        alert('Hometown must be less than 100 characters')
+        return
+      }
+      if (field === 'minor' && value && value.length > 100) {
+        alert('Minor must be less than 100 characters')
+        return
+      }
+      if (field === 'student_id' && value && value.length > 50) {
+        alert('Student ID must be less than 50 characters')
+        return
+      }
+
       const updateData = { [field]: value }
       
-      // Handle special field conversions
+      // Handle special field conversions and validation
       if (field === 'year' && value) {
-        updateData[field] = parseInt(value)
+        const yearNum = parseInt(value)
+        if (yearNum < 1 || yearNum > 10) {
+          alert('Year must be between 1 and 10')
+          return
+        }
+        updateData[field] = yearNum
       }
       if (field === 'graduation_year' && value) {
-        updateData[field] = parseInt(value)
+        const gradYear = parseInt(value)
+        if (gradYear < 2020 || gradYear > 2050) {
+          alert('Graduation year must be between 2020 and 2050')
+          return
+        }
+        updateData[field] = gradYear
       }
       if (field === 'gpa' && value) {
-        updateData[field] = parseFloat(value)
+        const gpaNum = parseFloat(value)
+        if (isNaN(gpaNum) || gpaNum < 0 || gpaNum > 4) {
+          alert('GPA must be a number between 0.0 and 4.0')
+          return
+        }
+        updateData[field] = gpaNum
       }
       
       const response = await api.put('/profile/me', updateData)
@@ -755,7 +839,21 @@ const Profile = () => {
       }
     } catch (error) {
       console.error('Failed to update field:', error)
-      alert('Failed to update. Please try again.')
+      console.error('Error response:', error.response?.data)
+      console.error('Field being updated:', field)
+      console.error('Value being sent:', value)
+      console.error('Update data being sent:', updateData)
+      
+      // Show detailed error message
+      const errorMessage = error.response?.data?.message || 'Failed to update. Please try again.'
+      const validationErrors = error.response?.data?.errors
+      
+      if (validationErrors && validationErrors.length > 0) {
+        console.error('Validation errors:', validationErrors)
+        alert(`Validation error: ${validationErrors.map(e => e.msg).join(', ')}`)
+      } else {
+        alert(errorMessage)
+      }
     }
   }
 
@@ -1655,6 +1753,7 @@ const Profile = () => {
             <EditableField 
               label="GPA"
               value={profile?.gpa ? `${profile.gpa}/4.0` : ''}
+              rawValue={profile?.gpa || ''}
               field="gpa"
               type="number"
               canEdit={canEdit}

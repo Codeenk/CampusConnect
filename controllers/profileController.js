@@ -45,17 +45,24 @@ const getProfile = async (req, res) => {
  */
 const updateProfile = async (req, res) => {
   try {
+    console.log('=== Profile Update Request ===')
+    console.log('User ID:', req.user.id)
+    console.log('Request body:', JSON.stringify(req.body, null, 2))
+    console.log('Content-Type:', req.headers['content-type'])
+    
     // Check validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      console.log('Validation errors:', errors.array())
-      console.log('Request body:', req.body)
+      console.log('❌ Validation errors:', errors.array())
+      console.log('Request body that failed validation:', req.body)
       return res.status(400).json({
         success: false,
         message: 'Validation failed',
         errors: errors.array()
       });
     }
+    
+    console.log('✅ Validation passed')
 
     const { 
       name, 
