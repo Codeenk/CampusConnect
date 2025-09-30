@@ -134,6 +134,530 @@ const EditableField = ({ label, value, field, type = 'text', canEdit, onSave, pl
   )
 }
 
+// Editable Experience Item Component
+const EditableExperienceItem = ({ experience, canEdit, onSave, onDelete }) => {
+  const [isEditing, setIsEditing] = useState(false)
+  const [editData, setEditData] = useState({
+    position: experience?.position || '',
+    company: experience?.company || '',
+    start_date: experience?.start_date || '',
+    end_date: experience?.end_date || '',
+    exp_location: experience?.exp_location || '',
+    description: experience?.description || ''
+  })
+  const [saving, setSaving] = useState(false)
+
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      await onSave({ ...experience, ...editData })
+      setIsEditing(false)
+    } catch (error) {
+      console.error('Save failed:', error)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleCancel = () => {
+    setEditData({
+      position: experience?.position || '',
+      company: experience?.company || '',
+      start_date: experience?.start_date || '',
+      end_date: experience?.end_date || '',
+      exp_location: experience?.exp_location || '',
+      description: experience?.description || ''
+    })
+    setIsEditing(false)
+  }
+
+  if (isEditing) {
+    return (
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Position</label>
+            <input
+              type="text"
+              value={editData.position}
+              onChange={(e) => setEditData({...editData, position: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              placeholder="e.g., Software Engineer Intern"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Company</label>
+            <input
+              type="text"
+              value={editData.company}
+              onChange={(e) => setEditData({...editData, company: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              placeholder="e.g., Google Inc."
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+            <input
+              type="text"
+              value={editData.start_date}
+              onChange={(e) => setEditData({...editData, start_date: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              placeholder="e.g., June 2023"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+            <input
+              type="text"
+              value={editData.end_date}
+              onChange={(e) => setEditData({...editData, end_date: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              placeholder="e.g., August 2023 or Present"
+            />
+          </div>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+          <input
+            type="text"
+            value={editData.exp_location}
+            onChange={(e) => setEditData({...editData, exp_location: e.target.value})}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+            placeholder="e.g., San Francisco, CA"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+          <textarea
+            rows="3"
+            value={editData.description}
+            onChange={(e) => setEditData({...editData, description: e.target.value})}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+            placeholder="Describe your role, responsibilities, and achievements..."
+          />
+        </div>
+        <div className="flex space-x-2 pt-2">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 flex items-center space-x-1"
+          >
+            {saving ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <Save className="w-4 h-4" />}
+            <span>Save</span>
+          </button>
+          <button
+            onClick={handleCancel}
+            disabled={saving}
+            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 disabled:opacity-50 flex items-center space-x-1"
+          >
+            <X className="w-4 h-4" />
+            <span>Cancel</span>
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex space-x-3 group hover:bg-gray-50 p-3 rounded-lg transition-colors">
+      <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center flex-shrink-0">
+        <Briefcase className="w-6 h-6 text-gray-600" />
+      </div>
+      <div className="flex-1">
+        <div className="flex justify-between items-start">
+          <div className="flex-1" onClick={() => canEdit && setIsEditing(true)} style={{ cursor: canEdit ? 'pointer' : 'default' }}>
+            <h3 className="font-semibold text-gray-900">{experience?.position || 'Position'}</h3>
+            <p className="text-gray-700 font-medium">{experience?.company || 'Company'}</p>
+            <p className="text-gray-600 text-sm">
+              {experience?.start_date || 'Start Date'} - {experience?.end_date || 'End Date'}
+            </p>
+            {experience?.exp_location && (
+              <p className="text-gray-600 text-sm">{experience.exp_location}</p>
+            )}
+            {experience?.description && (
+              <p className="text-gray-700 mt-2 whitespace-pre-wrap">{experience.description}</p>
+            )}
+          </div>
+          {canEdit && (
+            <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button
+                onClick={() => setIsEditing(true)}
+                className="p-1 text-gray-600 hover:bg-gray-200 rounded"
+              >
+                <Edit3 className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => onDelete(experience.id)}
+                className="p-1 text-red-600 hover:bg-red-50 rounded"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Editable Project Item Component  
+const EditableProjectItem = ({ project, canEdit, onSave, onDelete }) => {
+  const [isEditing, setIsEditing] = useState(false)
+  const [editData, setEditData] = useState({
+    name: project?.name || '',
+    technologies: project?.technologies || '',
+    proj_description: project?.proj_description || '',
+    github_url: project?.github_url || ''
+  })
+  const [saving, setSaving] = useState(false)
+
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      await onSave({ ...project, ...editData })
+      setIsEditing(false)
+    } catch (error) {
+      console.error('Save failed:', error)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleCancel = () => {
+    setEditData({
+      name: project?.name || '',
+      technologies: project?.technologies || '',
+      proj_description: project?.proj_description || '',
+      github_url: project?.github_url || ''
+    })
+    setIsEditing(false)
+  }
+
+  if (isEditing) {
+    return (
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Project Name</label>
+            <input
+              type="text"
+              value={editData.name}
+              onChange={(e) => setEditData({...editData, name: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              placeholder="e.g., E-commerce Website"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Technologies</label>
+            <input
+              type="text"
+              value={editData.technologies}
+              onChange={(e) => setEditData({...editData, technologies: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              placeholder="e.g., React, Node.js, MongoDB"
+            />
+          </div>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">GitHub URL</label>
+          <input
+            type="url"
+            value={editData.github_url}
+            onChange={(e) => setEditData({...editData, github_url: e.target.value})}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+            placeholder="https://github.com/username/project-name"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+          <textarea
+            rows="3"
+            value={editData.proj_description}
+            onChange={(e) => setEditData({...editData, proj_description: e.target.value})}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+            placeholder="Describe your project, its features, and your role..."
+          />
+        </div>
+        <div className="flex space-x-2 pt-2">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 flex items-center space-x-1"
+          >
+            {saving ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <Save className="w-4 h-4" />}
+            <span>Save</span>
+          </button>
+          <button
+            onClick={handleCancel}
+            disabled={saving}
+            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 disabled:opacity-50 flex items-center space-x-1"
+          >
+            <X className="w-4 h-4" />
+            <span>Cancel</span>
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex space-x-3 group hover:bg-gray-50 p-3 rounded-lg transition-colors">
+      <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center flex-shrink-0">
+        <Code2 className="w-6 h-6 text-gray-600" />
+      </div>
+      <div className="flex-1">
+        <div className="flex justify-between items-start">
+          <div className="flex-1" onClick={() => canEdit && setIsEditing(true)} style={{ cursor: canEdit ? 'pointer' : 'default' }}>
+            <h3 className="font-semibold text-gray-900">{project?.name || 'Project Name'}</h3>
+            {project?.technologies && (
+              <p className="text-gray-600 text-sm font-medium mb-1">{project.technologies}</p>
+            )}
+            {project?.proj_description && (
+              <p className="text-gray-700 whitespace-pre-wrap">{project.proj_description}</p>
+            )}
+            {project?.github_url && (
+              <a 
+                href={project.github_url} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-flex items-center text-blue-600 hover:text-blue-800 text-sm mt-2"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Github className="w-4 h-4 mr-1" />
+                View on GitHub
+              </a>
+            )}
+          </div>
+          {canEdit && (
+            <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button
+                onClick={() => setIsEditing(true)}
+                className="p-1 text-gray-600 hover:bg-gray-200 rounded"
+              >
+                <Edit3 className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => onDelete(project.id)}
+                className="p-1 text-red-600 hover:bg-red-50 rounded"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Add New Experience Form Component
+const AddNewExperienceForm = ({ onSave, onCancel }) => {
+  const [formData, setFormData] = useState({
+    position: '',
+    company: '',
+    start_date: '',
+    end_date: '',
+    exp_location: '',
+    description: ''
+  })
+  const [saving, setSaving] = useState(false)
+
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      await onSave(formData)
+    } catch (error) {
+      console.error('Save failed:', error)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-4">
+      <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+        <Briefcase className="w-5 h-5 mr-2" />
+        Add New Experience
+      </h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Position *</label>
+          <input
+            type="text"
+            value={formData.position}
+            onChange={(e) => setFormData({...formData, position: e.target.value})}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+            placeholder="e.g., Software Engineer Intern"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Company *</label>
+          <input
+            type="text"
+            value={formData.company}
+            onChange={(e) => setFormData({...formData, company: e.target.value})}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+            placeholder="e.g., Google Inc."
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Start Date *</label>
+          <input
+            type="text"
+            value={formData.start_date}
+            onChange={(e) => setFormData({...formData, start_date: e.target.value})}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+            placeholder="e.g., June 2023"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+          <input
+            type="text"
+            value={formData.end_date}
+            onChange={(e) => setFormData({...formData, end_date: e.target.value})}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+            placeholder="e.g., August 2023 or Present"
+          />
+        </div>
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+        <input
+          type="text"
+          value={formData.exp_location}
+          onChange={(e) => setFormData({...formData, exp_location: e.target.value})}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+          placeholder="e.g., San Francisco, CA"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+        <textarea
+          rows="3"
+          value={formData.description}
+          onChange={(e) => setFormData({...formData, description: e.target.value})}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+          placeholder="Describe your role, responsibilities, and achievements..."
+        />
+      </div>
+      <div className="flex space-x-2 pt-2">
+        <button
+          onClick={handleSave}
+          disabled={saving || !formData.position || !formData.company || !formData.start_date}
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
+        >
+          {saving ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <Save className="w-4 h-4" />}
+          <span>Save Experience</span>
+        </button>
+        <button
+          onClick={onCancel}
+          disabled={saving}
+          className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 disabled:opacity-50 flex items-center space-x-1"
+        >
+          <X className="w-4 h-4" />
+          <span>Cancel</span>
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// Add New Project Form Component  
+const AddNewProjectForm = ({ onSave, onCancel }) => {
+  const [formData, setFormData] = useState({
+    name: '',
+    technologies: '',
+    proj_description: '',
+    github_url: ''
+  })
+  const [saving, setSaving] = useState(false)
+
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      await onSave(formData)
+    } catch (error) {
+      console.error('Save failed:', error)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-4">
+      <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+        <Code2 className="w-5 h-5 mr-2" />
+        Add New Project
+      </h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Project Name *</label>
+          <input
+            type="text"
+            value={formData.name}
+            onChange={(e) => setFormData({...formData, name: e.target.value})}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+            placeholder="e.g., E-commerce Website"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Technologies</label>
+          <input
+            type="text"
+            value={formData.technologies}
+            onChange={(e) => setFormData({...formData, technologies: e.target.value})}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+            placeholder="e.g., React, Node.js, MongoDB"
+          />
+        </div>
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">GitHub URL</label>
+        <input
+          type="url"
+          value={formData.github_url}
+          onChange={(e) => setFormData({...formData, github_url: e.target.value})}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+          placeholder="https://github.com/username/project-name"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+        <textarea
+          rows="3"
+          value={formData.proj_description}
+          onChange={(e) => setFormData({...formData, proj_description: e.target.value})}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+          placeholder="Describe your project, its features, and your role..."
+        />
+      </div>
+      <div className="flex space-x-2 pt-2">
+        <button
+          onClick={handleSave}
+          disabled={saving || !formData.name}
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
+        >
+          {saving ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <Save className="w-4 h-4" />}
+          <span>Save Project</span>
+        </button>
+        <button
+          onClick={onCancel}
+          disabled={saving}
+          className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 disabled:opacity-50 flex items-center space-x-1"
+        >
+          <X className="w-4 h-4" />
+          <span>Cancel</span>
+        </button>
+      </div>
+    </div>
+  )
+}
+
 const Profile = () => {
   const { userId } = useParams()
   const { user: currentUser } = useAuth()
@@ -143,6 +667,8 @@ const Profile = () => {
   const [editingSection, setEditingSection] = useState(null)
   const [editingData, setEditingData] = useState({})
   const [inlineEditing, setInlineEditing] = useState({})
+  const [addingNewExperience, setAddingNewExperience] = useState(false)
+  const [addingNewProject, setAddingNewProject] = useState(false)
 
   // Check for read-only mode from URL parameters
   const urlParams = new URLSearchParams(window.location.search)
@@ -156,11 +682,47 @@ const Profile = () => {
 
   // Helper functions for experience and projects (still stored in achievements)
   const getExperienceFromAchievements = (achievements) => {
-    return achievements?.filter(item => item.type === 'experience').map(item => item.value) || []
+    if (!Array.isArray(achievements)) return []
+    
+    return achievements
+      .map(item => {
+        // Handle both string and object formats
+        let parsedItem = item
+        if (typeof item === 'string') {
+          try {
+            parsedItem = JSON.parse(item)
+          } catch (e) {
+            console.warn('Failed to parse achievement item:', item)
+            return null
+          }
+        }
+        return parsedItem
+      })
+      .filter(item => item && item.type === 'experience')
+      .map(item => item.value)
+      .filter(Boolean)
   }
   
   const getProjectsFromAchievements = (achievements) => {
-    return achievements?.filter(item => item.type === 'project').map(item => item.value) || []
+    if (!Array.isArray(achievements)) return []
+    
+    return achievements
+      .map(item => {
+        // Handle both string and object formats
+        let parsedItem = item
+        if (typeof item === 'string') {
+          try {
+            parsedItem = JSON.parse(item)
+          } catch (e) {
+            console.warn('Failed to parse achievement item:', item)
+            return null
+          }
+        }
+        return parsedItem
+      })
+      .filter(item => item && (item.type === 'projects' || item.type === 'project'))
+      .map(item => item.value)
+      .filter(Boolean)
   }
 
   // Handle individual field save
@@ -195,6 +757,129 @@ const Profile = () => {
       console.error('Failed to update field:', error)
       alert('Failed to update. Please try again.')
     }
+  }
+
+  // Handle individual experience item save
+  const handleExperienceSave = async (experienceData) => {
+    try {
+      const currentAchievements = profile.achievements || []
+      const nonExpAchievements = currentAchievements.filter(item => !item.type || item.type !== 'experience')
+      const currentExperiences = getExperienceFromAchievements(profile.achievements) || []
+      
+      let updatedExperiences
+      if (experienceData.id) {
+        // Update existing experience
+        updatedExperiences = currentExperiences.map(exp => 
+          exp.id === experienceData.id ? experienceData : exp
+        )
+      } else {
+        // Add new experience with generated ID
+        const newExperience = { ...experienceData, id: Date.now().toString() }
+        updatedExperiences = [...currentExperiences, newExperience]
+      }
+      
+      // Convert back to achievements format
+      const experienceAchievements = updatedExperiences.map(exp => ({
+        type: 'experience',
+        value: exp
+      }))
+      
+      const updatedAchievements = [...nonExpAchievements, ...experienceAchievements]
+      
+      const response = await api.put('/profile/me', { 
+        achievements: updatedAchievements 
+      })
+      
+      if (response.data.success) {
+        // Re-fetch the profile to ensure we have the latest data
+        await fetchProfile()
+      }
+    } catch (error) {
+      console.error('Failed to save experience:', error)
+      alert('Failed to save experience. Please try again.')
+    }
+  }
+
+  // Handle individual project item save
+  const handleProjectSave = async (projectData) => {
+    try {
+      const currentAchievements = profile.achievements || []
+      const nonProjAchievements = currentAchievements.filter(item => !item.type || item.type !== 'projects')
+      const currentProjects = getProjectsFromAchievements(profile.achievements) || []
+      
+      let updatedProjects
+      if (projectData.id) {
+        // Update existing project
+        updatedProjects = currentProjects.map(proj => 
+          proj.id === projectData.id ? projectData : proj
+        )
+      } else {
+        // Add new project with generated ID
+        const newProject = { ...projectData, id: Date.now().toString() }
+        updatedProjects = [...currentProjects, newProject]
+      }
+      
+      // Convert back to achievements format
+      const projectAchievements = updatedProjects.map(proj => ({
+        type: 'projects',
+        value: proj
+      }))
+      
+      const updatedAchievements = [...nonProjAchievements, ...projectAchievements]
+      
+      const response = await api.put('/profile/me', { 
+        achievements: updatedAchievements 
+      })
+      
+      if (response.data.success) {
+        // Re-fetch the profile to ensure we have the latest data
+        await fetchProfile()
+      }
+    } catch (error) {
+      console.error('Failed to save project:', error)
+      alert('Failed to save project. Please try again.')
+    }
+  }
+
+  // Handle adding new experience
+  const handleAddNewExperience = () => {
+    setAddingNewExperience(true)
+  }
+
+  // Handle adding new project
+  const handleAddNewProject = () => {
+    setAddingNewProject(true)
+  }
+
+  // Handle saving new experience
+  const handleSaveNewExperience = async (experienceData) => {
+    const newExperience = {
+      ...experienceData,
+      id: Date.now().toString()
+    }
+    
+    await handleExperienceSave(newExperience)
+    setAddingNewExperience(false)
+  }
+
+  // Handle saving new project
+  const handleSaveNewProject = async (projectData) => {
+    const newProject = {
+      ...projectData,
+      id: Date.now().toString()
+    }
+    
+    await handleProjectSave(newProject)
+    setAddingNewProject(false)
+  }
+
+  // Handle canceling add new experience/project
+  const handleCancelNewExperience = () => {
+    setAddingNewExperience(false)
+  }
+
+  const handleCancelNewProject = () => {
+    setAddingNewProject(false)
   }
 
   const fetchProfile = async () => {
@@ -271,6 +956,11 @@ const Profile = () => {
         // UI state
         isReadOnly: !canEdit
       })
+      
+      // Debug logging
+      console.log('Raw achievements:', profileData.achievements)
+      console.log('Parsed experiences:', getExperienceFromAchievements(profileData.achievements))
+      console.log('Parsed projects:', getProjectsFromAchievements(profileData.achievements))
     } catch (error) {
       console.error('Error fetching profile:', error)
       // Set a comprehensive fallback profile structure
@@ -300,8 +990,6 @@ const Profile = () => {
         achievements: [],
         is_verified: false,
         is_active: true,
-        headline: '',
-        location: '',
         experience: [],
         projects: [],
         isReadOnly: true
@@ -445,48 +1133,92 @@ const Profile = () => {
   }
 
   const deleteExperience = async (expId) => {
+    if (!confirm('Are you sure you want to delete this experience?')) {
+      return
+    }
+    
     try {
-      const currentExperience = getExperienceFromAchievements(profile.achievements)
-      const updatedExperience = currentExperience.filter(exp => exp.id !== expId)
+      const currentExperiences = getExperienceFromAchievements(profile.achievements) || []
+      const updatedExperiences = currentExperiences.filter(exp => exp.id !== expId)
       
-      // Update achievements array
+      // Update achievements array - filter out all experience items and add back the remaining ones
       const currentAchievements = profile.achievements || []
-      const nonExpAchievements = currentAchievements.filter(item => !item.type || item.type !== 'experience')
-      const expAchievements = updatedExperience.map(exp => ({
+      
+      // Parse achievements and filter out experience items
+      const nonExpAchievements = currentAchievements.filter(item => {
+        let parsedItem = item
+        if (typeof item === 'string') {
+          try {
+            parsedItem = JSON.parse(item)
+          } catch (e) {
+            return true // Keep unparseable items
+          }
+        }
+        return !parsedItem.type || parsedItem.type !== 'experience'
+      })
+      
+      // Add back the remaining experiences
+      const expAchievements = updatedExperiences.map(exp => ({
         type: 'experience',
         value: exp
       }))
       
-      const response = await api.put('/profile/me', { achievements: [...nonExpAchievements, ...expAchievements] })
+      const updatedAchievements = [...nonExpAchievements, ...expAchievements]
+      
+      const response = await api.put('/profile/me', { achievements: updatedAchievements })
       
       if (response.data.success) {
-        setProfile(prev => ({ ...prev, experience: updatedExperience, achievements: [...nonExpAchievements, ...expAchievements] }))
+        // Re-fetch the profile to ensure we have the latest data
+        await fetchProfile()
       }
     } catch (error) {
       console.error('Error deleting experience:', error)
+      alert('Failed to delete experience. Please try again.')
     }
   }
 
   const deleteProject = async (projId) => {
+    if (!confirm('Are you sure you want to delete this project?')) {
+      return
+    }
+    
     try {
-      const currentProjects = getProjectsFromAchievements(profile.achievements)
+      const currentProjects = getProjectsFromAchievements(profile.achievements) || []
       const updatedProjects = currentProjects.filter(proj => proj.id !== projId)
       
-      // Update achievements array
+      // Update achievements array - filter out all project items and add back the remaining ones
       const currentAchievements = profile.achievements || []
-      const nonProjAchievements = currentAchievements.filter(item => !item.type || item.type !== 'project')
+      
+      // Parse achievements and filter out project items
+      const nonProjAchievements = currentAchievements.filter(item => {
+        let parsedItem = item
+        if (typeof item === 'string') {
+          try {
+            parsedItem = JSON.parse(item)
+          } catch (e) {
+            return true // Keep unparseable items
+          }
+        }
+        return !parsedItem.type || (parsedItem.type !== 'projects' && parsedItem.type !== 'project')
+      })
+      
+      // Add back the remaining projects
       const projAchievements = updatedProjects.map(proj => ({
-        type: 'project',
+        type: 'projects',
         value: proj
       }))
       
-      const response = await api.put('/profile/me', { achievements: [...nonProjAchievements, ...projAchievements] })
+      const updatedAchievements = [...nonProjAchievements, ...projAchievements]
+      
+      const response = await api.put('/profile/me', { achievements: updatedAchievements })
       
       if (response.data.success) {
-        setProfile(prev => ({ ...prev, projects: updatedProjects, achievements: [...nonProjAchievements, ...projAchievements] }))
+        // Re-fetch the profile to ensure we have the latest data
+        await fetchProfile()
       }
     } catch (error) {
       console.error('Error deleting project:', error)
+      alert('Failed to delete project. Please try again.')
     }
   }
 
@@ -1131,277 +1863,108 @@ const Profile = () => {
       {/* Experience Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-gray-900">Experience</h2>
+          <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+            <Briefcase className="w-5 h-5 mr-2" />
+            Experience
+          </h2>
           {canEdit && (
             <button
-              onClick={() => startEditing('experience', {})}
-              className="p-2 text-gray-600 hover:bg-gray-100 rounded-md"
+              onClick={handleAddNewExperience}
+              className="p-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors flex items-center space-x-1"
             >
               <Plus className="w-4 h-4" />
+              <span className="text-sm">Add Experience</span>
             </button>
           )}
         </div>
 
-        {editingSection === 'experience' && (
-          <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Position</label>
-                <input
-                  type="text"
-                  value={editingData.position || ''}
-                  onChange={(e) => setEditingData({...editingData, position: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Summer Intern"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Company</label>
-                <input
-                  type="text"
-                  value={editingData.company || ''}
-                  onChange={(e) => setEditingData({...editingData, company: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="ABC TECH"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
-                <input
-                  type="text"
-                  value={editingData.start_date || ''}
-                  onChange={(e) => setEditingData({...editingData, start_date: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="June 2023"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
-                <input
-                  type="text"
-                  value={editingData.end_date || ''}
-                  onChange={(e) => setEditingData({...editingData, end_date: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="August 2023"
-                />
-              </div>
-            </div>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
-              <input
-                type="text"
-                value={editingData.exp_location || ''}
-                onChange={(e) => setEditingData({...editingData, exp_location: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                placeholder="San Francisco, California"
-              />
-            </div>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-              <textarea
-                rows="3"
-                value={editingData.description || ''}
-                onChange={(e) => setEditingData({...editingData, description: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Describe your role and achievements..."
-              />
-            </div>
-            <div className="flex space-x-2">
-              <button
-                onClick={() => saveSection('experience', editingData)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center space-x-1"
-              >
-                <Save className="w-4 h-4" />
-                <span>Save</span>
-              </button>
-              <button
-                onClick={cancelEditing}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 flex items-center space-x-1"
-              >
-                <X className="w-4 h-4" />
-                <span>Cancel</span>
-              </button>
-            </div>
-          </div>
-        )}
+        <div className="space-y-4">
+          {/* Add New Experience Form */}
+          {addingNewExperience && (
+            <AddNewExperienceForm
+              onSave={handleSaveNewExperience}
+              onCancel={handleCancelNewExperience}
+            />
+          )}
 
-        <div className="space-y-6">
           {profile?.experience && profile.experience.length > 0 ? (
             profile.experience.map((exp, index) => (
-              <div key={exp.id || index} className="flex space-x-3">
-                <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center flex-shrink-0">
-                  <Briefcase className="w-6 h-6 text-gray-600" />
-                </div>
-                <div className="flex-1">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="font-semibold text-gray-900">{exp.position || 'Position'}</h3>
-                      <p className="text-gray-700 font-medium">{exp.company || 'Company'}</p>
-                      <p className="text-gray-600 text-sm">
-                        {exp.start_date || 'Start Date'} - {exp.end_date || 'End Date'}
-                      </p>
-                      {exp.exp_location && (
-                        <p className="text-gray-600 text-sm">{exp.exp_location}</p>
-                      )}
-                      {exp.description && (
-                        <p className="text-gray-700 mt-2 whitespace-pre-wrap">{exp.description}</p>
-                      )}
-                    </div>
-                    {canEdit && (
-                      <div className="flex space-x-1">
-                        <button
-                          onClick={() => startEditing('experience', exp)}
-                          className="p-1 text-gray-600 hover:bg-gray-100 rounded"
-                        >
-                          <Edit3 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => deleteExperience(exp.id)}
-                          className="p-1 text-red-600 hover:bg-red-50 rounded"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
+              <EditableExperienceItem
+                key={exp.id || index}
+                experience={exp}
+                canEdit={canEdit}
+                onSave={handleExperienceSave}
+                onDelete={deleteExperience}
+              />
             ))
-          ) : (
-            <p className="text-gray-500 text-center py-8">No experience added yet.</p>
-          )}
+          ) : !addingNewExperience ? (
+            <div className="text-center py-12">
+              <Briefcase className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500 text-lg mb-2">No experience added yet</p>
+              {canEdit && (
+                <button
+                  onClick={handleAddNewExperience}
+                  className="text-blue-600 hover:text-blue-800 font-medium"
+                >
+                  Add your first experience
+                </button>
+              )}
+            </div>
+          ) : null}
         </div>
       </div>
 
       {/* Projects Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-gray-900">Projects</h2>
+          <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+            <Code2 className="w-5 h-5 mr-2" />
+            Projects
+          </h2>
           {canEdit && (
             <button
-              onClick={() => startEditing('projects', {})}
-              className="p-2 text-gray-600 hover:bg-gray-100 rounded-md"
+              onClick={handleAddNewProject}
+              className="p-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors flex items-center space-x-1"
             >
               <Plus className="w-4 h-4" />
+              <span className="text-sm">Add Project</span>
             </button>
           )}
         </div>
 
-        {editingSection === 'projects' && (
-          <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Project Name</label>
-                <input
-                  type="text"
-                  value={editingData.name || ''}
-                  onChange={(e) => setEditingData({...editingData, name: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Library Management System"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Technologies</label>
-                <input
-                  type="text"
-                  value={editingData.technologies || ''}
-                  onChange={(e) => setEditingData({...editingData, technologies: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="React, Node.js, MongoDB"
-                />
-              </div>
-            </div>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-              <textarea
-                rows="3"
-                value={editingData.proj_description || ''}
-                onChange={(e) => setEditingData({...editingData, proj_description: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Describe your project..."
-              />
-            </div>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">GitHub URL</label>
-              <input
-                type="url"
-                value={editingData.github_url || ''}
-                onChange={(e) => setEditingData({...editingData, github_url: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                placeholder="https://github.com/..."
-              />
-            </div>
-            <div className="flex space-x-2">
-              <button
-                onClick={() => saveSection('projects', editingData)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center space-x-1"
-              >
-                <Save className="w-4 h-4" />
-                <span>Save</span>
-              </button>
-              <button
-                onClick={cancelEditing}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 flex items-center space-x-1"
-              >
-                <X className="w-4 h-4" />
-                <span>Cancel</span>
-              </button>
-            </div>
-          </div>
-        )}
+        <div className="space-y-4">
+          {/* Add New Project Form */}
+          {addingNewProject && (
+            <AddNewProjectForm
+              onSave={handleSaveNewProject}
+              onCancel={handleCancelNewProject}
+            />
+          )}
 
-        <div className="space-y-6">
           {profile?.projects && profile.projects.length > 0 ? (
             profile.projects.map((project, index) => (
-              <div key={project.id || index} className="flex space-x-3">
-                <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center flex-shrink-0">
-                  <Code2 className="w-6 h-6 text-gray-600" />
-                </div>
-                <div className="flex-1">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="font-semibold text-gray-900">{project.name || 'Project'}</h3>
-                      {project.technologies && (
-                        <p className="text-gray-600 text-sm mb-2">{project.technologies}</p>
-                      )}
-                      {project.proj_description && (
-                        <p className="text-gray-700 whitespace-pre-wrap">{project.proj_description}</p>
-                      )}
-                      {project.github_url && (
-                        <a
-                          href={project.github_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center space-x-1 text-blue-600 hover:text-blue-800 mt-2"
-                        >
-                          <Github className="w-4 h-4" />
-                          <span>View on GitHub</span>
-                        </a>
-                      )}
-                    </div>
-                    {canEdit && (
-                      <div className="flex space-x-1">
-                        <button
-                          onClick={() => startEditing('projects', project)}
-                          className="p-1 text-gray-600 hover:bg-gray-100 rounded"
-                        >
-                          <Edit3 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => deleteProject(project.id)}
-                          className="p-1 text-red-600 hover:bg-red-50 rounded"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
+              <EditableProjectItem
+                key={project.id || index}
+                project={project}
+                canEdit={canEdit}
+                onSave={handleProjectSave}
+                onDelete={deleteProject}
+              />
             ))
-          ) : (
-            <p className="text-gray-500 text-center py-8">No projects added yet.</p>
-          )}
+          ) : !addingNewProject ? (
+            <div className="text-center py-12">
+              <Code2 className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500 text-lg mb-2">No projects added yet</p>
+              {canEdit && (
+                <button
+                  onClick={handleAddNewProject}
+                  className="text-blue-600 hover:text-blue-800 font-medium"
+                >
+                  Add your first project
+                </button>
+              )}
+            </div>
+          ) : null}
         </div>
       </div>
 
