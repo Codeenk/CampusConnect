@@ -660,6 +660,301 @@ const AddNewProjectForm = ({ onSave, onCancel }) => {
   )
 }
 
+// Editable Certification Item Component
+const EditableCertificationItem = ({ certification, canEdit, onSave, onDelete }) => {
+  const [isEditing, setIsEditing] = useState(false)
+  const [editData, setEditData] = useState({
+    name: certification?.name || '',
+    issuer: certification?.issuer || '',
+    issue_date: certification?.issue_date || '',
+    expiry_date: certification?.expiry_date || '',
+    credential_id: certification?.credential_id || '',
+    credential_url: certification?.credential_url || '',
+    description: certification?.description || ''
+  })
+
+  const handleSave = async () => {
+    try {
+      await onSave({ ...certification, ...editData })
+      setIsEditing(false)
+    } catch (error) {
+      console.error('Save failed:', error)
+    }
+  }
+
+  const handleCancel = () => {
+    setEditData({
+      name: certification?.name || '',
+      issuer: certification?.issuer || '',
+      issue_date: certification?.issue_date || '',
+      expiry_date: certification?.expiry_date || '',
+      credential_id: certification?.credential_id || '',
+      credential_url: certification?.credential_url || '',
+      description: certification?.description || ''
+    })
+    setIsEditing(false)
+  }
+
+  if (!canEdit) {
+    return (
+      <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <h3 className="font-semibold text-gray-900">{certification?.name || 'Certification'}</h3>
+            <p className="text-gray-700 font-medium">{certification?.issuer || 'Issuer'}</p>
+            <p className="text-gray-600 text-sm">
+              Issued: {certification?.issue_date || 'Issue Date'}
+              {certification?.expiry_date && ` • Expires: ${certification.expiry_date}`}
+            </p>
+            {certification?.credential_id && (
+              <p className="text-gray-600 text-sm">ID: {certification.credential_id}</p>
+            )}
+            {certification?.credential_url && (
+              <a href={certification.credential_url} target="_blank" rel="noopener noreferrer" 
+                 className="text-blue-600 hover:text-blue-700 text-sm">
+                View Credential →
+              </a>
+            )}
+            {certification?.description && (
+              <p className="text-gray-700 mt-2 whitespace-pre-wrap">{certification.description}</p>
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+      {isEditing ? (
+        <div className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <input
+              type="text"
+              placeholder="Certification Name *"
+              value={editData.name}
+              onChange={(e) => setEditData(prev => ({ ...prev, name: e.target.value }))}
+              className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              required
+            />
+            <input
+              type="text"
+              placeholder="Issuing Organization *"
+              value={editData.issuer}
+              onChange={(e) => setEditData(prev => ({ ...prev, issuer: e.target.value }))}
+              className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              required
+            />
+            <input
+              type="month"
+              placeholder="Issue Date"
+              value={editData.issue_date}
+              onChange={(e) => setEditData(prev => ({ ...prev, issue_date: e.target.value }))}
+              className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+            <input
+              type="month"
+              placeholder="Expiry Date (Optional)"
+              value={editData.expiry_date}
+              onChange={(e) => setEditData(prev => ({ ...prev, expiry_date: e.target.value }))}
+              className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+            <input
+              type="text"
+              placeholder="Credential ID (Optional)"
+              value={editData.credential_id}
+              onChange={(e) => setEditData(prev => ({ ...prev, credential_id: e.target.value }))}
+              className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+            <input
+              type="url"
+              placeholder="Credential URL (Optional)"
+              value={editData.credential_url}
+              onChange={(e) => setEditData(prev => ({ ...prev, credential_url: e.target.value }))}
+              className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+          <textarea
+            placeholder="Description (Optional)"
+            value={editData.description}
+            onChange={(e) => setEditData(prev => ({ ...prev, description: e.target.value }))}
+            rows={3}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+          <div className="flex gap-2">
+            <button
+              onClick={handleSave}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2"
+            >
+              <Save className="w-4 h-4" />
+              Save
+            </button>
+            <button
+              onClick={handleCancel}
+              className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 flex items-center gap-2"
+            >
+              <X className="w-4 h-4" />
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <h3 className="font-semibold text-gray-900">{certification?.name || 'Certification'}</h3>
+            <p className="text-gray-700 font-medium">{certification?.issuer || 'Issuer'}</p>
+            <p className="text-gray-600 text-sm">
+              Issued: {certification?.issue_date || 'Issue Date'}
+              {certification?.expiry_date && ` • Expires: ${certification.expiry_date}`}
+            </p>
+            {certification?.credential_id && (
+              <p className="text-gray-600 text-sm">ID: {certification.credential_id}</p>
+            )}
+            {certification?.credential_url && (
+              <a href={certification.credential_url} target="_blank" rel="noopener noreferrer" 
+                 className="text-blue-600 hover:text-blue-700 text-sm">
+                View Credential →
+              </a>
+            )}
+            {certification?.description && (
+              <p className="text-gray-700 mt-2 whitespace-pre-wrap">{certification.description}</p>
+            )}
+          </div>
+          <div className="flex gap-2 ml-4">
+            <button
+              onClick={() => setIsEditing(true)}
+              className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-md"
+              title="Edit certification"
+            >
+              <Edit3 className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => onDelete(certification.id)}
+              className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-md"
+              title="Delete certification"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Add New Certification Form Component
+const AddNewCertificationForm = ({ onSave, onCancel }) => {
+  const [formData, setFormData] = useState({
+    name: '',
+    issuer: '',
+    issue_date: '',
+    expiry_date: '',
+    credential_id: '',
+    credential_url: '',
+    description: ''
+  })
+  const [saving, setSaving] = useState(false)
+
+  const handleSave = async () => {
+    if (!formData.name.trim() || !formData.issuer.trim()) {
+      alert('Certification name and issuer are required')
+      return
+    }
+
+    setSaving(true)
+    try {
+      await onSave(formData)
+      onCancel() // Close the form after successful save
+    } catch (error) {
+      console.error('Save failed:', error)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+      <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+        <Award className="w-5 h-5" />
+        Add New Certification
+      </h3>
+      <div className="space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <input
+            type="text"
+            placeholder="Certification Name *"
+            value={formData.name}
+            onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+            className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            required
+          />
+          <input
+            type="text"
+            placeholder="Issuing Organization *"
+            value={formData.issuer}
+            onChange={(e) => setFormData(prev => ({ ...prev, issuer: e.target.value }))}
+            className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            required
+          />
+          <input
+            type="month"
+            placeholder="Issue Date"
+            value={formData.issue_date}
+            onChange={(e) => setFormData(prev => ({ ...prev, issue_date: e.target.value }))}
+            className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+          <input
+            type="month"
+            placeholder="Expiry Date (Optional)"
+            value={formData.expiry_date}
+            onChange={(e) => setFormData(prev => ({ ...prev, expiry_date: e.target.value }))}
+            className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+          <input
+            type="text"
+            placeholder="Credential ID (Optional)"
+            value={formData.credential_id}
+            onChange={(e) => setFormData(prev => ({ ...prev, credential_id: e.target.value }))}
+            className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+          <input
+            type="url"
+            placeholder="Credential URL (Optional)"
+            value={formData.credential_url}
+            onChange={(e) => setFormData(prev => ({ ...prev, credential_url: e.target.value }))}
+            className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+        <textarea
+          placeholder="Description (Optional)"
+          value={formData.description}
+          onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+          rows={3}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        />
+        <div className="flex gap-2">
+          <button
+            onClick={handleSave}
+            disabled={saving || !formData.name.trim() || !formData.issuer.trim()}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            {saving ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <Save className="w-4 h-4" />}
+            <span>Save Certification</span>
+          </button>
+          <button
+            onClick={onCancel}
+            disabled={saving}
+            className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 disabled:opacity-50 flex items-center gap-2"
+          >
+            <X className="w-4 h-4" />
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 const Profile = () => {
   const { userId } = useParams()
   const { user: currentUser } = useAuth()
@@ -671,6 +966,7 @@ const Profile = () => {
   const [inlineEditing, setInlineEditing] = useState({})
   const [addingNewExperience, setAddingNewExperience] = useState(false)
   const [addingNewProject, setAddingNewProject] = useState(false)
+  const [addingNewCertification, setAddingNewCertification] = useState(false)
 
   // Check for read-only mode from URL parameters
   const urlParams = new URLSearchParams(window.location.search)
@@ -711,63 +1007,59 @@ const Profile = () => {
   //   }
   // }, [isOwnProfile, userId])
 
-  // Helper functions for experience and projects (still stored in achievements)
-  const getExperienceFromAchievements = (achievements) => {
-    console.log('Processing achievements for experiences:', achievements)
-    if (!Array.isArray(achievements)) {
-      console.log('Achievements is not an array:', typeof achievements, achievements)
+  // Helper functions for direct database column access
+  const getExperienceArray = (experienceData) => {
+    console.log('Processing experience data:', experienceData)
+    if (!Array.isArray(experienceData)) {
+      console.log('Experience is not an array:', typeof experienceData, experienceData)
       return []
     }
     
-    const experiences = achievements
-      .map(item => {
-        // Handle both string and object formats
-        let parsedItem = item
-        if (typeof item === 'string') {
-          try {
-            parsedItem = JSON.parse(item)
-          } catch (e) {
-            console.warn('Failed to parse achievement item:', item)
-            return null
-          }
-        }
-        return parsedItem
-      })
-      .filter(item => item && item.type === 'experience')
-      .map(item => item.value)
-      .filter(Boolean)
+    const experiences = experienceData.map(exp => {
+      if (!exp.id) {
+        exp.id = Date.now().toString() + Math.random().toString(36).substr(2, 5)
+      }
+      return exp
+    })
     
-    console.log('Extracted experiences:', experiences)
+    console.log('Processed experiences:', experiences)
     return experiences
   }
   
-  const getProjectsFromAchievements = (achievements) => {
-    console.log('Processing achievements for projects:', achievements)
-    if (!Array.isArray(achievements)) {
-      console.log('Achievements is not an array:', typeof achievements, achievements)
+  const getProjectsArray = (projectsData) => {
+    console.log('Processing projects data:', projectsData)
+    if (!Array.isArray(projectsData)) {
+      console.log('Projects is not an array:', typeof projectsData, projectsData)
       return []
     }
     
-    const projects = achievements
-      .map(item => {
-        // Handle both string and object formats
-        let parsedItem = item
-        if (typeof item === 'string') {
-          try {
-            parsedItem = JSON.parse(item)
-          } catch (e) {
-            console.warn('Failed to parse achievement item:', item)
-            return null
-          }
-        }
-        return parsedItem
-      })
-      .filter(item => item && (item.type === 'projects' || item.type === 'project'))
-      .map(item => item.value)
-      .filter(Boolean)
+    const projects = projectsData.map(proj => {
+      if (!proj.id) {
+        proj.id = Date.now().toString() + Math.random().toString(36).substr(2, 5)
+      }
+      return proj
+    })
     
-    console.log('Extracted projects:', projects)
+    console.log('Processed projects:', projects)
     return projects
+  }
+
+  const getCertificationsArray = (certificationsData) => {
+    console.log('Processing certifications data:', certificationsData)
+    if (!Array.isArray(certificationsData)) {
+      console.log('Certifications is not an array:', typeof certificationsData, certificationsData)
+      return []
+    }
+    
+    const certifications = certificationsData.map(cert => {
+      if (!cert.id) {
+        cert.id = Date.now().toString() + Math.random().toString(36).substr(2, 5)
+      }
+      return cert
+    })
+    
+    console.log('Processed certifications:', certifications)
+    return certifications
   }
 
   // Handle individual field save
@@ -905,103 +1197,187 @@ const Profile = () => {
 
   // Handle individual experience item save
   const handleExperienceSave = async (experienceData) => {
+    console.log('Saving experience data:', experienceData)
+    
+    // Validation
+    if (!experienceData.position || !experienceData.company) {
+      alert('Position and Company are required fields')
+      return
+    }
+    
     try {
-      const currentAchievements = profile.achievements || []
-      const nonExpAchievements = currentAchievements.filter(item => {
-        if (typeof item === 'string') {
-          try {
-            const parsed = JSON.parse(item)
-            return parsed.type !== 'experience'
-          } catch (e) {
-            return true
-          }
-        }
-        return item.type !== 'experience'
-      })
-      const currentExperiences = getExperienceFromAchievements(profile.achievements) || []
+      // Get current experience array
+      const currentExperience = profile.experience || []
+      console.log('Current experience:', currentExperience)
       
-      let updatedExperiences
+      let updatedExperience
+      
       if (experienceData.id) {
         // Update existing experience
-        updatedExperiences = currentExperiences.map(exp => 
+        console.log('Updating existing experience with ID:', experienceData.id)
+        updatedExperience = currentExperience.map(exp => 
           exp.id === experienceData.id ? experienceData : exp
         )
+        
+        // If no existing item was found, add as new
+        const wasUpdated = updatedExperience.some(exp => exp.id === experienceData.id)
+        if (!wasUpdated) {
+          console.log('Experience not found, adding as new')
+          updatedExperience.push(experienceData)
+        }
       } else {
-        // Add new experience with generated ID
-        const newExperience = { ...experienceData, id: Date.now().toString() }
-        updatedExperiences = [...currentExperiences, newExperience]
+        // Add new experience
+        const newId = Date.now().toString() + Math.random().toString(36).substr(2, 5)
+        experienceData.id = newId
+        console.log('Adding new experience with ID:', newId)
+        updatedExperience = [...currentExperience, experienceData]
       }
       
-      // Convert back to achievements format
-      const experienceAchievements = updatedExperiences.map(exp => ({
-        type: 'experience',
-        value: exp
-      }))
+      console.log('Updated experience array:', updatedExperience)
       
-      const updatedAchievements = [...nonExpAchievements, ...experienceAchievements]
-      
-      const response = await api.put('/profile/me', { 
-        achievements: updatedAchievements 
+      // Save to database
+      const response = await api.put('/profile/me', {
+        experience: updatedExperience
       })
       
-      if (response.data.success) {
-        // Re-fetch the profile to ensure we have the latest data
-        await fetchProfile()
-      }
+      console.log('API response for experience save:', response.data)
+      
+      // Update local state immediately for better UX
+      setProfile(prev => ({
+        ...prev,
+        experience: updatedExperience,
+        updated_at: new Date().toISOString()
+      }))
+      
+      console.log('Experience saved successfully')
     } catch (error) {
       console.error('Failed to save experience:', error)
-      alert('Failed to save experience. Please try again.')
+      console.error('Error response:', error.response?.data)
+      alert(`Failed to save experience: ${error.response?.data?.message || error.message}`)
     }
   }
 
   // Handle individual project item save
   const handleProjectSave = async (projectData) => {
+    console.log('Saving project data:', projectData)
+    
+    // Validation
+    if (!projectData.title) {
+      alert('Project title is required')
+      return
+    }
+    
     try {
-      const currentAchievements = profile.achievements || []
-      const nonProjAchievements = currentAchievements.filter(item => {
-        if (typeof item === 'string') {
-          try {
-            const parsed = JSON.parse(item)
-            return parsed.type !== 'project' && parsed.type !== 'projects'
-          } catch (e) {
-            return true
-          }
-        }
-        return item.type !== 'project' && item.type !== 'projects'
-      })
-      const currentProjects = getProjectsFromAchievements(profile.achievements) || []
+      // Get current projects array
+      const currentProjects = profile.projects || []
+      console.log('Current projects:', currentProjects)
       
       let updatedProjects
+      
       if (projectData.id) {
         // Update existing project
+        console.log('Updating existing project with ID:', projectData.id)
         updatedProjects = currentProjects.map(proj => 
           proj.id === projectData.id ? projectData : proj
         )
+        
+        // If no existing item was found, add as new
+        const wasUpdated = updatedProjects.some(proj => proj.id === projectData.id)
+        if (!wasUpdated) {
+          console.log('Project not found, adding as new')
+          updatedProjects.push(projectData)
+        }
       } else {
-        // Add new project with generated ID
-        const newProject = { ...projectData, id: Date.now().toString() }
-        updatedProjects = [...currentProjects, newProject]
+        // Add new project
+        const newId = Date.now().toString() + Math.random().toString(36).substr(2, 5)
+        projectData.id = newId
+        console.log('Adding new project with ID:', newId)
+        updatedProjects = [...currentProjects, projectData]
       }
       
-      // Convert back to achievements format
-      const projectAchievements = updatedProjects.map(proj => ({
-        type: 'project',
-        value: proj
-      }))
+      console.log('Updated projects array:', updatedProjects)
       
-      const updatedAchievements = [...nonProjAchievements, ...projectAchievements]
-      
-      const response = await api.put('/profile/me', { 
-        achievements: updatedAchievements 
+      // Save to database
+      const response = await api.put('/profile/me', {
+        projects: updatedProjects
       })
       
-      if (response.data.success) {
-        // Re-fetch the profile to ensure we have the latest data
-        await fetchProfile()
-      }
+      console.log('API response for project save:', response.data)
+      
+      // Update local state immediately for better UX
+      setProfile(prev => ({
+        ...prev,
+        projects: updatedProjects,
+        updated_at: new Date().toISOString()
+      }))
+      
+      console.log('Project saved successfully')
     } catch (error) {
       console.error('Failed to save project:', error)
-      alert('Failed to save project. Please try again.')
+      console.error('Error response:', error.response?.data)
+      alert(`Failed to save project: ${error.response?.data?.message || error.message}`)
+    }
+  }
+
+  // Add certification save handler
+  const handleCertificationSave = async (certificationData) => {
+    console.log('Saving certification data:', certificationData)
+    
+    // Validation
+    if (!certificationData.name || !certificationData.issuer) {
+      alert('Certification name and issuer are required')
+      return
+    }
+    
+    try {
+      // Get current certifications array
+      const currentCertifications = profile.certifications || []
+      console.log('Current certifications:', currentCertifications)
+      
+      let updatedCertifications
+      
+      if (certificationData.id) {
+        // Update existing certification
+        console.log('Updating existing certification with ID:', certificationData.id)
+        updatedCertifications = currentCertifications.map(cert => 
+          cert.id === certificationData.id ? certificationData : cert
+        )
+        
+        // If no existing item was found, add as new
+        const wasUpdated = updatedCertifications.some(cert => cert.id === certificationData.id)
+        if (!wasUpdated) {
+          console.log('Certification not found, adding as new')
+          updatedCertifications.push(certificationData)
+        }
+      } else {
+        // Add new certification
+        const newId = Date.now().toString() + Math.random().toString(36).substr(2, 5)
+        certificationData.id = newId
+        console.log('Adding new certification with ID:', newId)
+        updatedCertifications = [...currentCertifications, certificationData]
+      }
+      
+      console.log('Updated certifications array:', updatedCertifications)
+      
+      // Save to database
+      const response = await api.put('/profile/me', {
+        certifications: updatedCertifications
+      })
+      
+      console.log('API response for certification save:', response.data)
+      
+      // Update local state immediately for better UX
+      setProfile(prev => ({
+        ...prev,
+        certifications: updatedCertifications,
+        updated_at: new Date().toISOString()
+      }))
+      
+      console.log('Certification saved successfully')
+    } catch (error) {
+      console.error('Failed to save certification:', error)
+      console.error('Error response:', error.response?.data)
+      alert(`Failed to save certification: ${error.response?.data?.message || error.message}`)
     }
   }
 
@@ -1013,6 +1389,11 @@ const Profile = () => {
   // Handle adding new project
   const handleAddNewProject = () => {
     setAddingNewProject(true)
+  }
+
+  // Handle adding new certification
+  const handleAddNewCertification = () => {
+    setAddingNewCertification(true)
   }
 
   // Handle saving new experience
@@ -1037,6 +1418,17 @@ const Profile = () => {
     setAddingNewProject(false)
   }
 
+  // Handle saving new certification
+  const handleSaveNewCertification = async (certificationData) => {
+    const newCertification = {
+      ...certificationData,
+      id: Date.now().toString()
+    }
+    
+    await handleCertificationSave(newCertification)
+    setAddingNewCertification(false)
+  }
+
   // Handle canceling add new experience/project
   const handleCancelNewExperience = () => {
     setAddingNewExperience(false)
@@ -1044,6 +1436,104 @@ const Profile = () => {
 
   const handleCancelNewProject = () => {
     setAddingNewProject(false)
+  }
+
+  const handleCancelNewCertification = () => {
+    setAddingNewCertification(false)
+  }
+
+  // Delete handlers using proper database columns
+  const deleteExperience = async (experienceId) => {
+    console.log('Deleting experience with ID:', experienceId)
+    
+    try {
+      const currentExperience = profile.experience || []
+      const updatedExperience = currentExperience.filter(exp => exp.id !== experienceId)
+      
+      console.log('Updated experience array after delete:', updatedExperience)
+      
+      // Save to database
+      const response = await api.put('/profile/me', {
+        experience: updatedExperience
+      })
+      
+      console.log('API response for experience delete:', response.data)
+      
+      // Update local state immediately
+      setProfile(prev => ({
+        ...prev,
+        experience: updatedExperience,
+        updated_at: new Date().toISOString()
+      }))
+      
+      console.log('Experience deleted successfully')
+    } catch (error) {
+      console.error('Failed to delete experience:', error)
+      console.error('Error response:', error.response?.data)
+      alert(`Failed to delete experience: ${error.response?.data?.message || error.message}`)
+    }
+  }
+
+  const deleteProject = async (projectId) => {
+    console.log('Deleting project with ID:', projectId)
+    
+    try {
+      const currentProjects = profile.projects || []
+      const updatedProjects = currentProjects.filter(proj => proj.id !== projectId)
+      
+      console.log('Updated projects array after delete:', updatedProjects)
+      
+      // Save to database
+      const response = await api.put('/profile/me', {
+        projects: updatedProjects
+      })
+      
+      console.log('API response for project delete:', response.data)
+      
+      // Update local state immediately
+      setProfile(prev => ({
+        ...prev,
+        projects: updatedProjects,
+        updated_at: new Date().toISOString()
+      }))
+      
+      console.log('Project deleted successfully')
+    } catch (error) {
+      console.error('Failed to delete project:', error)
+      console.error('Error response:', error.response?.data)
+      alert(`Failed to delete project: ${error.response?.data?.message || error.message}`)
+    }
+  }
+
+  const deleteCertification = async (certificationId) => {
+    console.log('Deleting certification with ID:', certificationId)
+    
+    try {
+      const currentCertifications = profile.certifications || []
+      const updatedCertifications = currentCertifications.filter(cert => cert.id !== certificationId)
+      
+      console.log('Updated certifications array after delete:', updatedCertifications)
+      
+      // Save to database
+      const response = await api.put('/profile/me', {
+        certifications: updatedCertifications
+      })
+      
+      console.log('API response for certification delete:', response.data)
+      
+      // Update local state immediately
+      setProfile(prev => ({
+        ...prev,
+        certifications: updatedCertifications,
+        updated_at: new Date().toISOString()
+      }))
+      
+      console.log('Certification deleted successfully')
+    } catch (error) {
+      console.error('Failed to delete certification:', error)
+      console.error('Error response:', error.response?.data)
+      alert(`Failed to delete certification: ${error.response?.data?.message || error.message}`)
+    }
   }
 
   const fetchProfile = async () => {
@@ -1139,9 +1629,7 @@ const Profile = () => {
         created_at: profileData.created_at,
         updated_at: profileData.updated_at,
         
-        // Custom fields for display (experience and projects from achievements)
-        experience: getExperienceFromAchievements(profileData.achievements),
-        projects: getProjectsFromAchievements(profileData.achievements),
+        // Experience, projects, and certifications are now direct database columns
         
         // UI state
         isReadOnly: !canEdit
@@ -1151,8 +1639,9 @@ const Profile = () => {
       console.log('Raw achievements:', profileData.achievements)
       console.log('Extracted headline:', headline)
       console.log('Extracted location:', location)
-      console.log('Parsed experiences:', getExperienceFromAchievements(profileData.achievements))
-      console.log('Parsed projects:', getProjectsFromAchievements(profileData.achievements))
+      console.log('Direct experience data:', profileData.experience)
+      console.log('Direct projects data:', profileData.projects)
+      console.log('Direct certifications data:', profileData.certifications)
     } catch (error) {
       console.error('Error fetching profile:', error)
       // Set a comprehensive fallback profile structure
@@ -1255,54 +1744,67 @@ const Profile = () => {
           interests: Array.isArray(data.interests) ? data.interests : []
         }
       } else if (section === 'experience') {
-        // Store experience in achievements with type 'experience'
-        const currentAchievements = profile.achievements || []
-        const nonExpAchievements = currentAchievements.filter(item => !item.type || item.type !== 'experience')
+        // Store experience in direct database column
+        console.log('Saving experience section:', data)
         
-        const updatedExperience = [...(getExperienceFromAchievements(profile.achievements) || [])]
+        const currentExperience = profile.experience || []
+        let updatedExperience = [...currentExperience]
+        
         if (data.id) {
           // Update existing
           const index = updatedExperience.findIndex(exp => exp.id === data.id)
           if (index >= 0) {
-            updatedExperience[index] = data
+            updatedExperience[index] = { ...updatedExperience[index], ...data }
           }
         } else {
           // Add new
-          updatedExperience.push({ ...data, id: Date.now().toString() })
+          updatedExperience.push({ ...data, id: Date.now().toString() + Math.random().toString(36).substr(2, 5) })
         }
         
-        // Store back in achievements
-        const expAchievements = updatedExperience.map(exp => ({
-          type: 'experience',
-          value: exp
-        }))
-        
-        updateData = { achievements: [...nonExpAchievements, ...expAchievements] }
+        console.log('Updated experience array:', updatedExperience)
+        updateData = { experience: updatedExperience }
         
       } else if (section === 'projects') {
-        // Store projects in achievements with type 'project'
-        const currentAchievements = profile.achievements || []
-        const nonProjAchievements = currentAchievements.filter(item => !item.type || item.type !== 'project')
+        // Store projects in direct database column
+        console.log('Saving projects section:', data)
         
-        const updatedProjects = [...(getProjectsFromAchievements(profile.achievements) || [])]
+        const currentProjects = profile.projects || []
+        let updatedProjects = [...currentProjects]
+        
         if (data.id) {
           // Update existing
           const index = updatedProjects.findIndex(proj => proj.id === data.id)
           if (index >= 0) {
-            updatedProjects[index] = data
+            updatedProjects[index] = { ...updatedProjects[index], ...data }
           }
         } else {
           // Add new
-          updatedProjects.push({ ...data, id: Date.now().toString() })
+          updatedProjects.push({ ...data, id: Date.now().toString() + Math.random().toString(36).substr(2, 5) })
         }
         
-        // Store back in achievements
-        const projAchievements = updatedProjects.map(proj => ({
-          type: 'project',
-          value: proj
-        }))
+        console.log('Updated projects array:', updatedProjects)
+        updateData = { projects: updatedProjects }
         
-        updateData = { achievements: [...nonProjAchievements, ...projAchievements] }
+      } else if (section === 'certifications') {
+        // Store certifications in direct database column
+        console.log('Saving certifications section:', data)
+        
+        const currentCertifications = profile.certifications || []
+        let updatedCertifications = [...currentCertifications]
+        
+        if (data.id) {
+          // Update existing
+          const index = updatedCertifications.findIndex(cert => cert.id === data.id)
+          if (index >= 0) {
+            updatedCertifications[index] = { ...updatedCertifications[index], ...data }
+          }
+        } else {
+          // Add new
+          updatedCertifications.push({ ...data, id: Date.now().toString() + Math.random().toString(36).substr(2, 5) })
+        }
+        
+        console.log('Updated certifications array:', updatedCertifications)
+        updateData = { certifications: updatedCertifications }
       }
 
       console.log('Final update data being sent:', updateData)
@@ -1327,95 +1829,7 @@ const Profile = () => {
     }
   }
 
-  const deleteExperience = async (expId) => {
-    if (!confirm('Are you sure you want to delete this experience?')) {
-      return
-    }
-    
-    try {
-      const currentExperiences = getExperienceFromAchievements(profile.achievements) || []
-      const updatedExperiences = currentExperiences.filter(exp => exp.id !== expId)
-      
-      // Update achievements array - filter out all experience items and add back the remaining ones
-      const currentAchievements = profile.achievements || []
-      
-      // Parse achievements and filter out experience items
-      const nonExpAchievements = currentAchievements.filter(item => {
-        let parsedItem = item
-        if (typeof item === 'string') {
-          try {
-            parsedItem = JSON.parse(item)
-          } catch (e) {
-            return true // Keep unparseable items
-          }
-        }
-        return !parsedItem.type || parsedItem.type !== 'experience'
-      })
-      
-      // Add back the remaining experiences
-      const expAchievements = updatedExperiences.map(exp => ({
-        type: 'experience',
-        value: exp
-      }))
-      
-      const updatedAchievements = [...nonExpAchievements, ...expAchievements]
-      
-      const response = await api.put('/profile/me', { achievements: updatedAchievements })
-      
-      if (response.data.success) {
-        // Re-fetch the profile to ensure we have the latest data
-        await fetchProfile()
-      }
-    } catch (error) {
-      console.error('Error deleting experience:', error)
-      alert('Failed to delete experience. Please try again.')
-    }
-  }
 
-  const deleteProject = async (projId) => {
-    if (!confirm('Are you sure you want to delete this project?')) {
-      return
-    }
-    
-    try {
-      const currentProjects = getProjectsFromAchievements(profile.achievements) || []
-      const updatedProjects = currentProjects.filter(proj => proj.id !== projId)
-      
-      // Update achievements array - filter out all project items and add back the remaining ones
-      const currentAchievements = profile.achievements || []
-      
-      // Parse achievements and filter out project items
-      const nonProjAchievements = currentAchievements.filter(item => {
-        let parsedItem = item
-        if (typeof item === 'string') {
-          try {
-            parsedItem = JSON.parse(item)
-          } catch (e) {
-            return true // Keep unparseable items
-          }
-        }
-        return !parsedItem.type || (parsedItem.type !== 'projects' && parsedItem.type !== 'project')
-      })
-      
-      // Add back the remaining projects
-      const projAchievements = updatedProjects.map(proj => ({
-        type: 'projects',
-        value: proj
-      }))
-      
-      const updatedAchievements = [...nonProjAchievements, ...projAchievements]
-      
-      const response = await api.put('/profile/me', { achievements: updatedAchievements })
-      
-      if (response.data.success) {
-        // Re-fetch the profile to ensure we have the latest data
-        await fetchProfile()
-      }
-    } catch (error) {
-      console.error('Error deleting project:', error)
-      alert('Failed to delete project. Please try again.')
-    }
-  }
 
   if (loading) {
     return <LoadingSpinner text="Loading profile..." />
@@ -2069,7 +2483,7 @@ const Profile = () => {
           )}
 
           {(() => {
-            const experiences = getExperienceFromAchievements(profile?.achievements) || []
+            const experiences = getExperienceArray(profile?.experience) || []
             
             if (experiences.length > 0) {
               return experiences.map((exp, index) => (
@@ -2133,7 +2547,7 @@ const Profile = () => {
           )}
 
           {(() => {
-            const projects = getProjectsFromAchievements(profile?.achievements) || []
+            const projects = getProjectsArray(profile?.projects) || []
             
             if (projects.length > 0) {
               return projects.map((project, index) => (
@@ -2158,6 +2572,70 @@ const Profile = () => {
                       className="text-blue-600 hover:text-blue-800 font-medium"
                     >
                       Add your first project
+                    </button>
+                  )}
+                </div>
+              )
+            }
+            
+            return null
+          })()}
+        </div>
+      </div>
+
+      {/* Certifications Section */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+            <Award className="w-5 h-5 mr-2" />
+            Certifications
+          </h2>
+          {canEdit && (
+            <button
+              onClick={handleAddNewCertification}
+              className="p-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors flex items-center space-x-1"
+            >
+              <Plus className="w-4 h-4" />
+              <span className="text-sm">Add Certification</span>
+            </button>
+          )}
+        </div>
+
+        <div className="space-y-4">
+          {/* Add New Certification Form */}
+          {addingNewCertification && (
+            <AddNewCertificationForm
+              onSave={handleSaveNewCertification}
+              onCancel={handleCancelNewCertification}
+            />
+          )}
+
+          {(() => {
+            const certifications = getCertificationsArray(profile?.certifications) || []
+            
+            if (certifications.length > 0) {
+              return certifications.map((certification, index) => (
+                <EditableCertificationItem
+                  key={certification.id || index}
+                  certification={certification}
+                  canEdit={canEdit}
+                  onSave={handleCertificationSave}
+                  onDelete={deleteCertification}
+                />
+              ))
+            }
+            
+            if (!addingNewCertification) {
+              return (
+                <div className="text-center py-12">
+                  <Award className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500 text-lg mb-2">No certifications added yet</p>
+                  {canEdit && (
+                    <button
+                      onClick={handleAddNewCertification}
+                      className="text-blue-600 hover:text-blue-800 font-medium"
+                    >
+                      Add your first certification
                     </button>
                   )}
                 </div>

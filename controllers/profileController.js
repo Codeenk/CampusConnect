@@ -86,7 +86,11 @@ const updateProfile = async (req, res) => {
       github_url,
       linkedin_url,
       portfolio_url,
-      achievements
+      achievements,
+      experience,
+      projects,
+      certifications,
+      education
     } = req.body;
     const userId = req.user.id;
 
@@ -121,6 +125,12 @@ const updateProfile = async (req, res) => {
     if (linkedin_url !== undefined) updateData.linkedin_url = linkedin_url;
     if (portfolio_url !== undefined) updateData.portfolio_url = portfolio_url;
     if (achievements !== undefined) updateData.achievements = Array.isArray(achievements) ? achievements : (achievements ? [achievements] : []);
+    
+    // Handle new LinkedIn-style sections
+    if (experience !== undefined) updateData.experience = Array.isArray(experience) ? experience : [];
+    if (projects !== undefined) updateData.projects = Array.isArray(projects) ? projects : [];
+    if (certifications !== undefined) updateData.certifications = Array.isArray(certifications) ? certifications : [];
+    if (education !== undefined) updateData.education = Array.isArray(education) ? education : [];
     
     updateData.updated_at = new Date().toISOString();
 
