@@ -119,7 +119,68 @@ const updateProfileValidation = [
   body('achievements')
     .optional()
     .isArray()
-    .withMessage('Achievements must be an array')
+    .withMessage('Achievements must be an array'),
+  body('experience')
+    .optional()
+    .isArray()
+    .withMessage('Experience must be an array')
+    .custom((value) => {
+      if (Array.isArray(value)) {
+        for (const exp of value) {
+          if (typeof exp !== 'object' || exp === null) {
+            throw new Error('Each experience item must be an object');
+          }
+          if (exp.position && typeof exp.position !== 'string') {
+            throw new Error('Experience position must be a string');
+          }
+          if (exp.company && typeof exp.company !== 'string') {
+            throw new Error('Experience company must be a string');
+          }
+        }
+      }
+      return true;
+    }),
+  body('projects')
+    .optional()
+    .isArray()
+    .withMessage('Projects must be an array')
+    .custom((value) => {
+      if (Array.isArray(value)) {
+        for (const proj of value) {
+          if (typeof proj !== 'object' || proj === null) {
+            throw new Error('Each project item must be an object');
+          }
+          if (proj.title && typeof proj.title !== 'string') {
+            throw new Error('Project title must be a string');
+          }
+        }
+      }
+      return true;
+    }),
+  body('certifications')
+    .optional()
+    .isArray()
+    .withMessage('Certifications must be an array')
+    .custom((value) => {
+      if (Array.isArray(value)) {
+        for (const cert of value) {
+          if (typeof cert !== 'object' || cert === null) {
+            throw new Error('Each certification item must be an object');
+          }
+          if (cert.name && typeof cert.name !== 'string') {
+            throw new Error('Certification name must be a string');
+          }
+          if (cert.issuer && typeof cert.issuer !== 'string') {
+            throw new Error('Certification issuer must be a string');
+          }
+        }
+      }
+      return true;
+    }),
+  body('education')
+    .optional()
+    .isArray()
+    .withMessage('Education must be an array')
 ];
 
 // Routes

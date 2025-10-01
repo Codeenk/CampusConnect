@@ -306,7 +306,7 @@ const EditableExperienceItem = ({ experience, canEdit, onSave, onDelete }) => {
 const EditableProjectItem = ({ project, canEdit, onSave, onDelete }) => {
   const [isEditing, setIsEditing] = useState(false)
   const [editData, setEditData] = useState({
-    name: project?.name || '',
+    title: project?.title || '',
     technologies: project?.technologies || '',
     proj_description: project?.proj_description || '',
     github_url: project?.github_url || ''
@@ -327,7 +327,7 @@ const EditableProjectItem = ({ project, canEdit, onSave, onDelete }) => {
 
   const handleCancel = () => {
     setEditData({
-      name: project?.name || '',
+      title: project?.title || '',
       technologies: project?.technologies || '',
       proj_description: project?.proj_description || '',
       github_url: project?.github_url || ''
@@ -340,11 +340,11 @@ const EditableProjectItem = ({ project, canEdit, onSave, onDelete }) => {
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Project Name</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Project Title</label>
             <input
               type="text"
-              value={editData.name}
-              onChange={(e) => setEditData({...editData, name: e.target.value})}
+              value={editData.title}
+              onChange={(e) => setEditData({...editData, title: e.target.value})}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
               placeholder="e.g., E-commerce Website"
             />
@@ -410,7 +410,7 @@ const EditableProjectItem = ({ project, canEdit, onSave, onDelete }) => {
       <div className="flex-1">
         <div className="flex justify-between items-start">
           <div className="flex-1" onClick={() => canEdit && setIsEditing(true)} style={{ cursor: canEdit ? 'pointer' : 'default' }}>
-            <h3 className="font-semibold text-gray-900">{project?.name || 'Project Name'}</h3>
+            <h3 className="font-semibold text-gray-900">{project?.title || 'Project Title'}</h3>
             {project?.technologies && (
               <p className="text-gray-600 text-sm font-medium mb-1">{project.technologies}</p>
             )}
@@ -571,7 +571,7 @@ const AddNewExperienceForm = ({ onSave, onCancel }) => {
 // Add New Project Form Component  
 const AddNewProjectForm = ({ onSave, onCancel }) => {
   const [formData, setFormData] = useState({
-    name: '',
+    title: '',
     technologies: '',
     proj_description: '',
     github_url: ''
@@ -579,6 +579,11 @@ const AddNewProjectForm = ({ onSave, onCancel }) => {
   const [saving, setSaving] = useState(false)
 
   const handleSave = async () => {
+    if (!formData.title?.trim()) {
+      alert('Project title is required')
+      return
+    }
+    
     setSaving(true)
     try {
       await onSave(formData)
@@ -597,11 +602,11 @@ const AddNewProjectForm = ({ onSave, onCancel }) => {
       </h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Project Name *</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Project Title *</label>
           <input
             type="text"
-            value={formData.name}
-            onChange={(e) => setFormData({...formData, name: e.target.value})}
+            value={formData.title}
+            onChange={(e) => setFormData({...formData, title: e.target.value})}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
             placeholder="e.g., E-commerce Website"
             required
@@ -641,7 +646,7 @@ const AddNewProjectForm = ({ onSave, onCancel }) => {
       <div className="flex space-x-2 pt-2">
         <button
           onClick={handleSave}
-          disabled={saving || !formData.name}
+          disabled={saving || !formData.title?.trim()}
           className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
         >
           {saving ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <Save className="w-4 h-4" />}
