@@ -18,8 +18,10 @@ import {
   UserPlus,
   Mail,
   Plus,
-  Save
+  Save,
+  Bot
 } from 'lucide-react'
+import CCBot from './CCBot'
 
 const SearchOverlay = ({ isOpen, onClose }) => {
   const [searchQuery, setSearchQuery] = useState('')
@@ -402,6 +404,7 @@ const Sidebar = () => {
   const [searchOpen, setSearchOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [createPostOpen, setCreatePostOpen] = useState(false)
+  const [ccBotOpen, setCcBotOpen] = useState(false)
 
   const handleLogout = () => {
     logout()
@@ -413,6 +416,7 @@ const Sidebar = () => {
     { to: '/profile', icon: User, label: 'Profile', shortLabel: 'Profile' },
     { type: 'action', icon: Plus, label: 'Create Post', shortLabel: 'Create', action: () => setCreatePostOpen(true), className: 'create-post-btn' },
     { to: '/messages', icon: MessageCircle, label: 'Messages', shortLabel: 'Messages', badge: unreadCount > 0 ? unreadCount : null },
+    { type: 'action', icon: Bot, label: 'CC Bot', shortLabel: 'CC Bot', action: () => setCcBotOpen(true), className: 'cc-bot-btn' },
     ...(user?.role === 'admin' ? [{ to: '/admin', icon: Shield, label: 'Admin Panel', shortLabel: 'Admin' }] : []),
   ]
 
@@ -465,29 +469,51 @@ const Sidebar = () => {
 
         {/* Navigation */}
         <nav className="flex-1 p-4 space-y-2">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) =>
-                `flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 relative ${
-                  isActive
-                    ? 'bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 border-r-2 border-blue-600'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                }`
-              }
-            >
-              <div className="relative">
-                <item.icon className="w-5 h-5" />
-                {item.badge && (
-                  <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center font-medium shadow-lg">
-                    {item.badge > 99 ? '99+' : item.badge}
+          {navItems.map((item, index) => {
+            if (item.type === 'action') {
+              return (
+                <button
+                  key={index}
+                  onClick={item.action}
+                  className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900 group"
+                >
+                  <div className="relative">
+                    <item.icon className={`w-5 h-5 ${item.className === 'cc-bot-btn' ? 'group-hover:animate-pulse' : ''}`} />
+                    {item.className === 'cc-bot-btn' && (
+                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
+                        <span className="text-white text-xs font-bold leading-none">AI</span>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-              <span className="font-medium">{item.label}</span>
-            </NavLink>
-          ))}
+                  <span className="font-medium">{item.label}</span>
+                </button>
+              )
+            }
+            
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={({ isActive }) =>
+                  `flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 relative ${
+                    isActive
+                      ? 'bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 border-r-2 border-blue-600'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                  }`
+                }
+              >
+                <div className="relative">
+                  <item.icon className="w-5 h-5" />
+                  {item.badge && (
+                    <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center font-medium shadow-lg">
+                      {item.badge > 99 ? '99+' : item.badge}
+                    </div>
+                  )}
+                </div>
+                <span className="font-medium">{item.label}</span>
+              </NavLink>
+            )
+          })}
         </nav>
 
         {/* Bottom Actions */}
@@ -593,19 +619,38 @@ const Sidebar = () => {
 
       {/* Mobile Bottom Navigation */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white shadow-lg border-t border-gray-200">
-        <div className="flex items-center justify-around py-2">
+        <div className="flex items-center justify-between px-2 py-2">
           {navItems.map((item, index) => {
             if (item.type === 'action') {
+              // Special styling for Create Post button
+              if (item.className === 'create-post-btn') {
+                return (
+                  <button
+                    key={index}
+                    onClick={item.action}
+                    className="flex flex-col items-center py-2 px-3 min-w-0 relative text-white"
+                  >
+                    <div className="relative bg-gradient-to-r from-blue-600 to-purple-600 rounded-full p-2 shadow-lg hover:shadow-xl transition-all transform hover:scale-105">
+                      <item.icon className="w-6 h-6" />
+                    </div>
+                    <span className="text-xs font-medium truncate max-w-[60px] text-gray-600 mt-1">{item.shortLabel}</span>
+                  </button>
+                )
+              }
+              // Regular action button styling for CC Bot
               return (
                 <button
                   key={index}
                   onClick={item.action}
-                  className="flex flex-col items-center py-2 px-3 min-w-0 relative text-white"
+                  className="flex flex-col items-center py-2 px-2 min-w-0 relative text-gray-600 hover:text-purple-600 transition-colors group"
                 >
-                  <div className="relative bg-gradient-to-r from-blue-600 to-purple-600 rounded-full p-2 shadow-lg hover:shadow-xl transition-all transform hover:scale-105">
-                    <item.icon className="w-6 h-6" />
+                  <div className="relative">
+                    <item.icon className="w-6 h-6 mb-1 group-hover:animate-pulse" />
+                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
+                      <span className="text-white text-xs font-bold">AI</span>
+                    </div>
                   </div>
-                  <span className="text-xs font-medium truncate max-w-[60px] text-gray-600 mt-1">{item.shortLabel}</span>
+                  <span className="text-xs font-medium truncate max-w-[50px]">{item.shortLabel}</span>
                 </button>
               )
             }
@@ -650,6 +695,12 @@ const Sidebar = () => {
             window.location.reload()
           }
         }}
+      />
+      
+      {/* CC Bot */}
+      <CCBot 
+        isOpen={ccBotOpen}
+        onClose={() => setCcBotOpen(false)}
       />
     </>
   )
