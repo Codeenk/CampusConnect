@@ -1914,301 +1914,84 @@ const Profile = () => {
             )}
           </div>
 
-          {/* Basic Info Section */}
-          {editingSection === 'basic' ? (
-            <div className="space-y-6">
-              {/* Personal Information */}
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="text-md font-semibold text-gray-800 mb-3 flex items-center">
-                  <User className="w-4 h-4 mr-2" />
-                  Personal Information
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
-                    <input
-                      type="text"
-                      value={editingData.name || profile.name || ''}
-                      onChange={(e) => setEditingData({...editingData, name: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Your full name"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
-                    <input
-                      type="text"
-                      value={editingData.location || profile.location || ''}
-                      onChange={(e) => setEditingData({...editingData, location: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="City, State, Country"
-                    />
-                  </div>
-                </div>
-                <div className="mt-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Professional Headline *</label>
-                  <input
-                    type="text"
-                    value={editingData.headline || profile.headline || ''}
-                    onChange={(e) => setEditingData({...editingData, headline: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="e.g., Computer Science Student | Full Stack Developer | AI Enthusiast"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">This headline will be shown instead of your generic role description</p>
-                </div>
-              </div>
-
-              {/* Academic Information */}
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <h3 className="text-md font-semibold text-gray-800 mb-3 flex items-center">
-                  <GraduationCap className="w-4 h-4 mr-2" />
-                  Academic Information
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
-                    <input
-                      type="text"
-                      value={editingData.department || profile.department || ''}
-                      onChange={(e) => setEditingData({...editingData, department: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="e.g., Computer Science, Engineering"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Major/Specialization</label>
-                    <input
-                      type="text"
-                      value={editingData.major || profile.major || ''}
-                      onChange={(e) => setEditingData({...editingData, major: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="e.g., Software Engineering, Data Science"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Current Year</label>
-                    <select
-                      value={editingData.year || profile.year || ''}
-                      onChange={(e) => setEditingData({...editingData, year: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="">Select Year</option>
-                      <option value="1">1st Year</option>
-                      <option value="2">2nd Year</option>
-                      <option value="3">3rd Year</option>
-                      <option value="4">4th Year</option>
-                      <option value="5">5th Year (Masters)</option>
-                      <option value="6">6th Year (PhD)</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Expected Graduation</label>
-                    <input
-                      type="number"
-                      value={editingData.graduation_year || profile.graduation_year || ''}
-                      onChange={(e) => setEditingData({...editingData, graduation_year: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="2025"
-                      min="2020"
-                      max="2050"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Minor</label>
-                    <input
-                      type="text"
-                      value={editingData.minor || profile.minor || ''}
-                      onChange={(e) => setEditingData({...editingData, minor: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="e.g., Mathematics, Business"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">GPA</label>
-                    <input
-                      type="number"
-                      step="1.00"
-                      min="0.00"
-                      max="10.00"
-                      value={editingData.gpa || profile.gpa || ''}
-                      onChange={(e) => setEditingData({...editingData, gpa: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="3.75"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Hometown</label>
-                    <input
-                      type="text"
-                      value={editingData.hometown || profile.hometown || ''}
-                      onChange={(e) => setEditingData({...editingData, hometown: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="e.g., Mumbai, India"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Student ID</label>
-                    <input
-                      type="text"
-                      value={editingData.student_id || profile.student_id || ''}
-                      onChange={(e) => setEditingData({...editingData, student_id: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Your student ID (optional)"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Profile Image Section */}
-              <div className="bg-purple-50 p-4 rounded-lg">
-                <h3 className="text-md font-semibold text-gray-800 mb-3 flex items-center">
-                  <Camera className="w-4 h-4 mr-2" />
-                  Profile Picture
-                </h3>
-                <div className="space-y-2">
-                  <input
-                    type="url"
-                    value={editingData.profile_image_url || profile.profile_image_url || ''}
-                    onChange={(e) => setEditingData({...editingData, profile_image_url: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="https://example.com/your-profile-image.jpg"
-                  />
-                  <p className="text-xs text-gray-500">
-                    Add a URL to your profile picture (optional). Use a service like Imgur, Cloudinary, or your personal website.
+          {/* Profile Information Display */}
+          <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start mb-2">
+            <div className="flex-1">
+              <h1 className="text-xl lg:text-3xl font-bold text-gray-900 leading-tight">{profile?.name || 'Unknown User'}</h1>
+              {/* Show custom headline if available */}
+              {profile?.headline ? (
+                <div>
+                  <p className="text-sm lg:text-lg text-gray-700 mt-1 font-medium leading-snug">
+                    {profile.headline}
                   </p>
-                  {editingData.profile_image_url && (
-                    <div className="mt-2">
-                      <img
-                        src={editingData.profile_image_url}
-                        alt="Preview"
-                        className="w-20 h-20 rounded-full border-2 border-gray-300 object-cover"
-                        onError={(e) => {
-                          e.target.style.display = 'none'
-                        }}
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* About Section */}
-              <div className="bg-green-50 p-4 rounded-lg">
-                <h3 className="text-md font-semibold text-gray-800 mb-3 flex items-center">
-                  <BookOpen className="w-4 h-4 mr-2" />
-                  About You
-                </h3>
-                <textarea
-                  rows="5"
-                  value={editingData.bio || profile.bio || ''}
-                  onChange={(e) => setEditingData({...editingData, bio: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Tell us about yourself, your interests, goals, and what you're passionate about..."
-                  maxLength="1000"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  {(editingData.bio || profile.bio || '').length}/1000 characters
-                </p>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex space-x-2 pt-4 border-t border-gray-200">
-                <button
-                  onClick={() => saveSection('basic', editingData)}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center space-x-2 font-medium"
-                >
-                  <Save className="w-4 h-4" />
-                  <span>Save Changes</span>
-                </button>
-                <button
-                  onClick={cancelEditing}
-                  className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 flex items-center space-x-2 font-medium"
-                >
-                  <X className="w-4 h-4" />
-                  <span>Cancel</span>
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div>
-              <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start mb-2">
-                <div className="flex-1">
-                  <h1 className="text-xl lg:text-3xl font-bold text-gray-900 leading-tight">{profile?.name || 'Unknown User'}</h1>
-                  {/* Show custom headline if available */}
-                  {profile?.headline ? (
-                    <div>
-                      <p className="text-sm lg:text-lg text-gray-700 mt-1 font-medium leading-snug">
-                        {profile.headline}
-                      </p>
-                      {/* Show academic info as supplementary if we have department or major */}
-                      {(profile?.department || profile?.major) && (
-                        <p className="text-sm lg:text-md text-gray-600 mt-1">
-                          {profile?.role === 'faculty' 
-                            ? `Faculty at ${profile?.department || 'University'}`
-                            : `Student pursuing ${profile?.major || profile?.department || 'Computer Science'}`
-                          }
-                        </p>
-                      )}
-                    </div>
-                  ) : (
-                    /* Fallback to generic role description */
-                    <p className="text-sm lg:text-lg text-gray-700 mt-1 leading-snug">
+                  {/* Show academic info as supplementary if we have department or major */}
+                  {(profile?.department || profile?.major) && (
+                    <p className="text-sm lg:text-md text-gray-600 mt-1">
                       {profile?.role === 'faculty' 
                         ? `Faculty at ${profile?.department || 'University'}`
                         : `Student pursuing ${profile?.major || profile?.department || 'Computer Science'}`
                       }
                     </p>
                   )}
-                  {profile.location && (
-                    <div className="flex items-center space-x-1 mt-2 text-gray-600">
-                      <MapPin className="w-4 h-4" />
-                      <span className="text-sm">{profile.location}</span>
-                    </div>
-                  )}
                 </div>
-                {canEdit && (
-                  <button
-                    onClick={() => startEditing('basic', {
-                      name: profile.name,
-                      headline: profile.headline,
-                      location: profile.location,
-                      bio: profile.bio,
-                      department: profile.department,
-                      major: profile.major,
-                      minor: profile.minor,
-                      year: profile.year,
-                      graduation_year: profile.graduation_year,
-                      gpa: profile.gpa,
-                      hometown: profile.hometown,
-                      student_id: profile.student_id,
-                      profile_image_url: profile.profile_image_url,
-                      avatar_url: profile.avatar_url
-                    })}
-                    className="p-2 text-gray-600 hover:bg-gray-100 rounded-md"
-                  >
-                    <Edit3 className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-              
-              <div className="flex flex-wrap gap-2 lg:gap-3 mt-3 lg:mt-0">
-                {isOwnProfile && (
-                  <button className="px-4 lg:px-6 py-2 bg-blue-600 text-white rounded-full text-sm lg:text-base font-medium hover:bg-blue-700">
-                    Open To Work
-                  </button>
-                )}
-                
-                {!isOwnProfile && (
-                  <button 
-                    onClick={startMessage}
-                    className="flex items-center space-x-2 px-3 lg:px-4 py-2 border border-blue-600 text-blue-600 rounded-full text-sm lg:text-base font-medium hover:bg-blue-50 transition-colors"
-                  >
-                    <MessageCircle className="w-4 h-4" />
-                    <span>Send Message</span>
-                  </button>
-                )}
-              </div>
+              ) : (
+                /* Fallback to generic role description */
+                <p className="text-sm lg:text-lg text-gray-700 mt-1 leading-snug">
+                  {profile?.role === 'faculty' 
+                    ? `Faculty at ${profile?.department || 'University'}`
+                    : `Student pursuing ${profile?.major || profile?.department || 'Computer Science'}`
+                  }
+                </p>
+              )}
+              {profile.location && (
+                <div className="flex items-center space-x-1 mt-2 text-gray-600">
+                  <MapPin className="w-4 h-4" />
+                  <span className="text-sm">{profile.location}</span>
+                </div>
+              )}
             </div>
-          )}
+            {canEdit && (
+              <button
+                onClick={() => startEditing('basic', {
+                  name: profile.name,
+                  headline: profile.headline,
+                  location: profile.location,
+                  bio: profile.bio,
+                  department: profile.department,
+                  major: profile.major,
+                  minor: profile.minor,
+                  year: profile.year,
+                  graduation_year: profile.graduation_year,
+                  gpa: profile.gpa,
+                  hometown: profile.hometown,
+                  student_id: profile.student_id,
+                  profile_image_url: profile.profile_image_url,
+                  avatar_url: profile.avatar_url
+                })}
+                className="p-2 text-gray-600 hover:bg-gray-100 rounded-md"
+              >
+                <Edit3 className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+          
+          <div className="flex flex-wrap gap-2 lg:gap-3 mt-3 lg:mt-0">
+            {isOwnProfile && (
+              <button className="px-4 lg:px-6 py-2 bg-blue-600 text-white rounded-full text-sm lg:text-base font-medium hover:bg-blue-700">
+                Open To Work
+              </button>
+            )}
+            
+            {!isOwnProfile && (
+              <button 
+                onClick={startMessage}
+                className="flex items-center space-x-2 px-3 lg:px-4 py-2 border border-blue-600 text-blue-600 rounded-full text-sm lg:text-base font-medium hover:bg-blue-50 transition-colors"
+              >
+                <MessageCircle className="w-4 h-4" />
+                <span>Send Message</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
