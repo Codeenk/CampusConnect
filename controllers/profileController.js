@@ -24,6 +24,13 @@ const getProfile = async (req, res) => {
       });
     }
 
+    console.log('✅ Own profile fetched successfully for user:', userId)
+    console.log('Profile data keys:', Object.keys(profile))
+    console.log('Experience entries:', Array.isArray(profile.experience) ? profile.experience.length : 'Not an array')
+    console.log('Projects entries:', Array.isArray(profile.projects) ? profile.projects.length : 'Not an array')
+    console.log('Certifications entries:', Array.isArray(profile.certifications) ? profile.certifications.length : 'Not an array')
+    console.log('Education entries:', Array.isArray(profile.education) ? profile.education.length : 'Not an array')
+
     res.json({
       success: true,
       data: {
@@ -86,11 +93,7 @@ const updateProfile = async (req, res) => {
       github_url,
       linkedin_url,
       portfolio_url,
-      achievements,
-      experience,
-      projects,
-      certifications,
-      education
+      achievements
     } = req.body;
     const userId = req.user.id;
 
@@ -125,12 +128,6 @@ const updateProfile = async (req, res) => {
     if (linkedin_url !== undefined) updateData.linkedin_url = linkedin_url;
     if (portfolio_url !== undefined) updateData.portfolio_url = portfolio_url;
     if (achievements !== undefined) updateData.achievements = Array.isArray(achievements) ? achievements : (achievements ? [achievements] : []);
-    
-    // Handle new LinkedIn-style sections
-    if (experience !== undefined) updateData.experience = Array.isArray(experience) ? experience : [];
-    if (projects !== undefined) updateData.projects = Array.isArray(projects) ? projects : [];
-    if (certifications !== undefined) updateData.certifications = Array.isArray(certifications) ? certifications : [];
-    if (education !== undefined) updateData.education = Array.isArray(education) ? education : [];
     
     updateData.updated_at = new Date().toISOString();
 
@@ -297,6 +294,10 @@ const getProfileById = async (req, res) => {
 
     console.log('✅ Profile fetched successfully for user:', userId)
     console.log('Profile data keys:', Object.keys(profile))
+    console.log('Experience entries:', Array.isArray(profile.experience) ? profile.experience.length : 'Not an array')
+    console.log('Projects entries:', Array.isArray(profile.projects) ? profile.projects.length : 'Not an array')
+    console.log('Certifications entries:', Array.isArray(profile.certifications) ? profile.certifications.length : 'Not an array')
+    console.log('Education entries:', Array.isArray(profile.education) ? profile.education.length : 'Not an array')
 
     res.json({
       success: true,

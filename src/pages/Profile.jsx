@@ -1161,8 +1161,8 @@ const Profile = () => {
       }
       if (field === 'gpa' && value) {
         const gpaNum = parseFloat(value)
-        if (isNaN(gpaNum) || gpaNum < 0 || gpaNum > 4) {
-          alert('GPA must be a number between 0.0 and 4.0')
+        if (isNaN(gpaNum) || gpaNum < 0 || gpaNum > 10) {
+          alert('GPA must be a number between 0.0 and 10.0')
           return
         }
         updateData[field] = gpaNum
@@ -1628,13 +1628,17 @@ const Profile = () => {
         interests: Array.isArray(profileData.interests) ? profileData.interests : [],
         achievements: Array.isArray(profileData.achievements) ? profileData.achievements : [],
         
+        // New database columns (direct access)
+        experience: Array.isArray(profileData.experience) ? profileData.experience : [],
+        projects: Array.isArray(profileData.projects) ? profileData.projects : [],
+        certifications: Array.isArray(profileData.certifications) ? profileData.certifications : [],
+        education: Array.isArray(profileData.education) ? profileData.education : [],
+        
         // System fields
         is_verified: profileData.is_verified || false,
         is_active: profileData.is_active !== undefined ? profileData.is_active : true,
         created_at: profileData.created_at,
         updated_at: profileData.updated_at,
-        
-        // Experience, projects, and certifications are now direct database columns
         
         // UI state
         isReadOnly: !canEdit
@@ -1674,10 +1678,14 @@ const Profile = () => {
         skills: [],
         interests: [],
         achievements: [],
-        is_verified: false,
-        is_active: true,
         experience: [],
         projects: [],
+        certifications: [],
+        education: [],
+        is_verified: false,
+        is_active: true,
+        created_at: null,
+        updated_at: null,
         isReadOnly: true
       })
     } finally {
@@ -1850,10 +1858,10 @@ const Profile = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-4 lg:space-y-6">
       {/* Read-Only Mode Banner */}
       {isReadOnlyMode && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center space-x-3">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 lg:p-4 flex items-center space-x-3">
           <div className="flex-shrink-0">
             <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
               <User className="w-4 h-4 text-blue-600" />
@@ -1863,7 +1871,7 @@ const Profile = () => {
             <h3 className="text-sm font-medium text-blue-900">
               Viewing {profile?.name || 'User'}'s Profile
             </h3>
-            <p className="text-sm text-blue-700">
+            <p className="text-xs lg:text-sm text-blue-700">
               You're viewing this profile in read-only mode. You can browse their information but cannot make changes.
             </p>
           </div>
@@ -1873,20 +1881,20 @@ const Profile = () => {
       {/* Profile Header Card */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         {/* Cover Photo Area */}
-        <div className="h-32 bg-gradient-to-r from-blue-600 to-purple-600"></div>
+        <div className="h-24 lg:h-32 bg-gradient-to-r from-blue-600 to-purple-600"></div>
         
         {/* Profile Info */}
-        <div className="px-6 pb-6">
+        <div className="px-4 lg:px-6 pb-4 lg:pb-6">
           {/* Avatar */}
-          <div className="relative -mt-16 mb-4">
+          <div className="relative -mt-12 lg:-mt-16 mb-4">
             {profile?.profile_image_url || profile?.avatar_url ? (
               <img
                 src={profile?.profile_image_url || profile?.avatar_url}
                 alt={profile.name}
-                className="w-32 h-32 rounded-full border-4 border-white shadow-lg object-cover"
+                className="w-24 h-24 lg:w-32 lg:h-32 rounded-full border-4 border-white shadow-lg object-cover"
               />
             ) : (
-              <div className="w-32 h-32 rounded-full border-4 border-white bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-4xl font-bold text-white shadow-lg">
+              <div className="w-24 h-24 lg:w-32 lg:h-32 rounded-full border-4 border-white bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-2xl lg:text-4xl font-bold text-white shadow-lg">
                 {profile.name?.charAt(0)?.toUpperCase() || 'U'}
               </div>
             )}
@@ -2019,9 +2027,9 @@ const Profile = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-1">GPA</label>
                     <input
                       type="number"
-                      step="0.01"
+                      step="1.00"
                       min="0.00"
-                      max="4.00"
+                      max="10.00"
                       value={editingData.gpa || profile.gpa || ''}
                       onChange={(e) => setEditingData({...editingData, gpa: e.target.value})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
@@ -2122,18 +2130,18 @@ const Profile = () => {
             </div>
           ) : (
             <div>
-              <div className="flex justify-between items-start mb-2">
-                <div>
-                  <h1 className="text-3xl font-bold text-gray-900">{profile?.name || 'Unknown User'}</h1>
+              <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start mb-2">
+                <div className="flex-1">
+                  <h1 className="text-xl lg:text-3xl font-bold text-gray-900 leading-tight">{profile?.name || 'Unknown User'}</h1>
                   {/* Show custom headline if available */}
                   {profile?.headline ? (
                     <div>
-                      <p className="text-lg text-gray-700 mt-1 font-medium">
+                      <p className="text-sm lg:text-lg text-gray-700 mt-1 font-medium leading-snug">
                         {profile.headline}
                       </p>
                       {/* Show academic info as supplementary if we have department or major */}
                       {(profile?.department || profile?.major) && (
-                        <p className="text-md text-gray-600 mt-1">
+                        <p className="text-sm lg:text-md text-gray-600 mt-1">
                           {profile?.role === 'faculty' 
                             ? `Faculty at ${profile?.department || 'University'}`
                             : `Student pursuing ${profile?.major || profile?.department || 'Computer Science'}`
@@ -2143,7 +2151,7 @@ const Profile = () => {
                     </div>
                   ) : (
                     /* Fallback to generic role description */
-                    <p className="text-lg text-gray-700 mt-1">
+                    <p className="text-sm lg:text-lg text-gray-700 mt-1 leading-snug">
                       {profile?.role === 'faculty' 
                         ? `Faculty at ${profile?.department || 'University'}`
                         : `Student pursuing ${profile?.major || profile?.department || 'Computer Science'}`
@@ -2153,7 +2161,7 @@ const Profile = () => {
                   {profile.location && (
                     <div className="flex items-center space-x-1 mt-2 text-gray-600">
                       <MapPin className="w-4 h-4" />
-                      <span>{profile.location}</span>
+                      <span className="text-sm">{profile.location}</span>
                     </div>
                   )}
                 </div>
@@ -2182,9 +2190,9 @@ const Profile = () => {
                 )}
               </div>
               
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-wrap gap-2 lg:gap-3 mt-3 lg:mt-0">
                 {isOwnProfile && (
-                  <button className="px-6 py-2 bg-blue-600 text-white rounded-full font-medium hover:bg-blue-700">
+                  <button className="px-4 lg:px-6 py-2 bg-blue-600 text-white rounded-full text-sm lg:text-base font-medium hover:bg-blue-700">
                     Open To Work
                   </button>
                 )}
@@ -2192,7 +2200,7 @@ const Profile = () => {
                 {!isOwnProfile && (
                   <button 
                     onClick={startMessage}
-                    className="flex items-center space-x-2 px-4 py-2 border border-blue-600 text-blue-600 rounded-full font-medium hover:bg-blue-50 transition-colors"
+                    className="flex items-center space-x-2 px-3 lg:px-4 py-2 border border-blue-600 text-blue-600 rounded-full text-sm lg:text-base font-medium hover:bg-blue-50 transition-colors"
                   >
                     <MessageCircle className="w-4 h-4" />
                     <span>Send Message</span>
@@ -2205,9 +2213,9 @@ const Profile = () => {
       </div>
 
       {/* About Section */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-gray-900">About</h2>
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 lg:p-6">
+        <div className="flex justify-between items-center mb-3 lg:mb-4">
+          <h2 className="text-lg lg:text-xl font-semibold text-gray-900">About</h2>
           {canEdit && editingSection !== 'basic' && (
             <button
               onClick={() => startEditing('basic', {
@@ -2238,18 +2246,18 @@ const Profile = () => {
       </div>
 
       {/* Academic & Personal Information Section - Fully Editable */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 lg:p-6">
+        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-4 lg:mb-6">
+          <h2 className="text-lg lg:text-xl font-semibold text-gray-900 flex items-center">
             <GraduationCap className="w-5 h-5 mr-2" />
             Academic & Personal Information
           </h2>
           {canEdit && (
-            <span className="text-sm text-blue-600">✏️ All fields are editable - click to edit</span>
+            <span className="text-xs lg:text-sm text-blue-600 mt-1 lg:mt-0">✏️ All fields are editable - click to edit</span>
           )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
           {/* Academic Information */}
           <div className="space-y-4">
             <h3 className="font-semibold text-gray-800 flex items-center border-b border-gray-200 pb-2">
@@ -2326,14 +2334,14 @@ const Profile = () => {
             {/* GPA Field */}
             <EditableField 
               label="GPA"
-              value={profile?.gpa ? `${profile.gpa}/4.0` : ''}
+              value={profile?.gpa ? `${profile.gpa}/10.0` : ''}
               rawValue={profile?.gpa || ''}
               field="gpa"
               type="number"
               canEdit={canEdit}
               onSave={(value) => handleFieldSave('gpa', value)}
               placeholder="3.75"
-              inputProps={{ min: 0, max: 4, step: 0.01 }}
+              inputProps={{ min: 0, max: 10, step: 1.00 }}
             />
             
             {/* Student ID Field */}
@@ -2401,15 +2409,15 @@ const Profile = () => {
       </div>
 
       {/* Contact Information Section */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="mb-4">
-          <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 lg:p-6">
+        <div className="mb-3 lg:mb-4">
+          <h2 className="text-lg lg:text-xl font-semibold text-gray-900 flex items-center">
             <Mail className="w-5 h-5 mr-2" />
             Contact Information
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
           {/* Phone Number Field */}
           <EditableField 
             label="Phone Number"
@@ -2461,16 +2469,16 @@ const Profile = () => {
       </div>
 
       {/* Experience Section */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 lg:p-6">
+        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-4 lg:mb-6">
+          <h2 className="text-lg lg:text-xl font-semibold text-gray-900 flex items-center">
             <Briefcase className="w-5 h-5 mr-2" />
             Experience
           </h2>
           {canEdit && (
             <button
               onClick={handleAddNewExperience}
-              className="p-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors flex items-center space-x-1"
+              className="mt-2 lg:mt-0 p-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors flex items-center space-x-1 text-sm lg:text-base"
             >
               <Plus className="w-4 h-4" />
               <span className="text-sm">Add Experience</span>
@@ -2525,16 +2533,16 @@ const Profile = () => {
       </div>
 
       {/* Projects Section */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 lg:p-6">
+        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-4 lg:mb-6">
+          <h2 className="text-lg lg:text-xl font-semibold text-gray-900 flex items-center">
             <Code2 className="w-5 h-5 mr-2" />
             Projects
           </h2>
           {canEdit && (
             <button
               onClick={handleAddNewProject}
-              className="p-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors flex items-center space-x-1"
+              className="mt-2 lg:mt-0 p-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors flex items-center space-x-1 text-sm lg:text-base"
             >
               <Plus className="w-4 h-4" />
               <span className="text-sm">Add Project</span>
@@ -2589,16 +2597,16 @@ const Profile = () => {
       </div>
 
       {/* Certifications Section */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 lg:p-6">
+        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-4 lg:mb-6">
+          <h2 className="text-lg lg:text-xl font-semibold text-gray-900 flex items-center">
             <Award className="w-5 h-5 mr-2" />
             Certifications
           </h2>
           {canEdit && (
             <button
               onClick={handleAddNewCertification}
-              className="p-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors flex items-center space-x-1"
+              className="mt-2 lg:mt-0 p-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors flex items-center space-x-1 text-sm lg:text-base"
             >
               <Plus className="w-4 h-4" />
               <span className="text-sm">Add Certification</span>
@@ -2653,9 +2661,9 @@ const Profile = () => {
       </div>
 
       {/* Skills & Interests Section */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 lg:p-6">
+        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-3 lg:mb-4">
+          <h2 className="text-lg lg:text-xl font-semibold text-gray-900 flex items-center">
             <Zap className="w-5 h-5 mr-2" />
             Skills & Interests
           </h2>

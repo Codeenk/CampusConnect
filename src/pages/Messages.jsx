@@ -329,18 +329,18 @@ const Messages = () => {
   }
 
   return (
-    <div className="h-[calc(100vh-8rem)] flex bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <div className="h-[calc(100vh-8rem)] lg:h-[calc(100vh-8rem)] flex bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
       {/* Conversations Sidebar */}
-      <div className="w-1/3 border-r border-gray-200 flex flex-col">
+      <div className={`${selectedConversation ? 'hidden lg:flex' : 'flex'} w-full lg:w-1/3 border-r border-gray-200 flex-col`}>
         {/* Header */}
-        <div className="p-4 border-b border-gray-200">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-900">Messages</h2>
+        <div className="p-3 lg:p-4 border-b border-gray-200">
+          <div className="flex items-center justify-between mb-3 lg:mb-4">
+            <h2 className="text-lg lg:text-xl font-bold text-gray-900">Messages</h2>
             <button
               onClick={() => setShowNewMessage(true)}
-              className="btn-primary flex items-center space-x-2 px-3 py-2"
+              className="btn-primary flex items-center space-x-1 lg:space-x-2 px-2 lg:px-3 py-1 lg:py-2 text-sm lg:text-base"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-3 lg:w-4 h-3 lg:h-4" />
               <span>New</span>
             </button>
           </div>
@@ -361,10 +361,10 @@ const Messages = () => {
         {/* Conversations List */}
         <div className="flex-1 overflow-y-auto">
           {filteredConversations.length === 0 ? (
-            <div className="p-8 text-center">
-              <MessageCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No conversations yet</h3>
-              <p className="text-gray-600 text-sm">
+            <div className="p-4 lg:p-8 text-center">
+              <MessageCircle className="w-10 lg:w-12 h-10 lg:h-12 text-gray-400 mx-auto mb-3 lg:mb-4" />
+              <h3 className="text-base lg:text-lg font-semibold text-gray-900 mb-2">No conversations yet</h3>
+              <p className="text-gray-600 text-xs lg:text-sm px-2">
                 Start a conversation by visiting someone's profile and clicking "Send Message"
               </p>
             </div>
@@ -373,26 +373,26 @@ const Messages = () => {
               <div
                 key={conversation.partner_id}
                 onClick={() => setSelectedConversation(conversation)}
-                className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${
+                className={`p-3 lg:p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${
                   selectedConversation?.partner_id === conversation.partner_id ? 'bg-blue-50 border-blue-200' : ''
                 }`}
               >
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                    <span className="text-white font-semibold text-sm">
+                  <div className="w-8 lg:w-10 h-8 lg:h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-white font-semibold text-xs lg:text-sm">
                       {conversation.partner_name.charAt(0)}
                     </span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <h3 className="font-semibold text-gray-900 truncate">
+                      <h3 className="font-semibold text-gray-900 truncate text-sm lg:text-base">
                         {conversation.partner_name}
                       </h3>
-                      <span className="text-xs text-gray-500 capitalize">
+                      <span className="text-xs text-gray-500 capitalize ml-2">
                         {conversation.partner_role}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-600 truncate">
+                    <p className="text-xs lg:text-sm text-gray-600 truncate">
                       {conversation.last_message}
                     </p>
                     {conversation.unread_count > 0 && (
@@ -408,47 +408,41 @@ const Messages = () => {
         </div>
       </div>
 
-      {/* Chat Area */}
-      <div className="flex-1 flex flex-col">
+      {/* Messages Area */}
+      <div className={`${selectedConversation ? 'flex' : 'hidden lg:flex'} flex-1 flex-col`}>
         {selectedConversation ? (
           <>
             {/* Chat Header */}
-            <div className="p-4 border-b border-gray-200 bg-gray-50">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                    <span className="text-white font-semibold text-sm">
-                      {selectedConversation.partner_name.charAt(0)}
-                    </span>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900">
-                      {selectedConversation.partner_name}
-                    </h3>
-                    <p className="text-sm text-gray-500 capitalize">
-                      {selectedConversation.partner_role}
-                    </p>
-                  </div>
+            <div className="p-3 lg:p-4 border-b border-gray-200 bg-gray-50">
+              <div className="flex items-center space-x-3">
+                {/* Back button for mobile */}
+                <button 
+                  onClick={() => setSelectedConversation(null)}
+                  className="lg:hidden p-1 hover:bg-gray-200 rounded-md transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-600" />
+                </button>
+                <div className="w-8 lg:w-10 h-8 lg:h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                  <span className="text-white font-semibold text-xs lg:text-sm">
+                    {selectedConversation.partner_name?.charAt(0) || 'U'}
+                  </span>
                 </div>
-                
-                {/* Live indicator */}
-                <div className="flex items-center space-x-2">
-                  <div className="flex items-center space-x-1">
-                    <div className={`w-2 h-2 rounded-full ${isAutoRefreshing ? 'bg-green-500 animate-pulse' : 'bg-green-400'}`}></div>
-                    <span className="text-xs text-gray-500">Live</span>
-                  </div>
-                  {isAutoRefreshing && (
-                    <div className="text-xs text-blue-600 animate-pulse">Checking for new messages...</div>
-                  )}
+                <div>
+                  <h3 className="font-semibold text-gray-900 text-sm lg:text-base">
+                    {selectedConversation.partner_name}
+                  </h3>
+                  <p className="text-xs lg:text-sm text-gray-600">
+                    {selectedConversation.partner_role}
+                  </p>
                 </div>
               </div>
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div className="flex-1 overflow-y-auto p-2 lg:p-4 space-y-3 lg:space-y-4">
               {messages.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-gray-500">No messages yet. Start the conversation!</p>
+                <div className="text-center py-6 lg:py-8">
+                  <p className="text-gray-500 text-sm lg:text-base">No messages yet. Start the conversation!</p>
                 </div>
               ) : (
                 messages.map((message) => (
@@ -457,13 +451,13 @@ const Messages = () => {
                     className={`flex ${message.sender_id === user.id ? 'justify-end' : 'justify-start'}`}
                   >
                     <div
-                      className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                      className={`max-w-[75%] lg:max-w-xs xl:max-w-md px-3 lg:px-4 py-2 rounded-lg ${
                         message.sender_id === user.id
                           ? 'bg-blue-500 text-white'
                           : 'bg-gray-200 text-gray-900'
                       }`}
                     >
-                      <p className="text-sm">{message.message}</p>
+                      <p className="text-sm lg:text-sm break-words">{message.message}</p>
                       <p className={`text-xs mt-1 ${
                         message.sender_id === user.id ? 'text-blue-100' : 'text-gray-500'
                       }`}>
@@ -481,36 +475,36 @@ const Messages = () => {
             </div>
 
             {/* Message Input */}
-            <div className="p-4 border-t border-gray-200">
-              <form onSubmit={sendMessage} className="flex space-x-3">
+            <div className="p-3 lg:p-4 border-t border-gray-200">
+              <form onSubmit={sendMessage} className="flex space-x-2 lg:space-x-3">
                 <input
                   type="text"
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   placeholder="Type your message..."
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="flex-1 px-3 lg:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm lg:text-base"
                 />
                 <button
                   type="submit"
                   disabled={sendingMessage || !newMessage.trim()}
-                  className="btn-primary flex items-center space-x-2 disabled:opacity-50"
+                  className="btn-primary flex items-center space-x-1 lg:space-x-2 px-3 lg:px-4 py-2 disabled:opacity-50 text-sm lg:text-base"
                 >
                   {sendingMessage ? (
                     <div className="spinner"></div>
                   ) : (
-                    <Send className="w-4 h-4" />
+                    <Send className="w-3 lg:w-4 h-3 lg:h-4" />
                   )}
-                  <span>Send</span>
+                  <span className="hidden sm:inline">Send</span>
                 </button>
               </form>
             </div>
           </>
         ) : (
-          <div className="flex-1 flex items-center justify-center">
+          <div className="flex-1 flex items-center justify-center p-4">
             <div className="text-center">
-              <MessageCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Select a conversation</h3>
-              <p className="text-gray-600">
+              <MessageCircle className="w-12 lg:w-16 h-12 lg:h-16 text-gray-400 mx-auto mb-3 lg:mb-4" />
+              <h3 className="text-lg lg:text-xl font-semibold text-gray-900 mb-2">Select a conversation</h3>
+              <p className="text-gray-600 text-sm lg:text-base px-4">
                 Choose a conversation from the sidebar to start messaging
               </p>
             </div>
@@ -520,71 +514,71 @@ const Messages = () => {
 
       {/* New Message Modal */}
       {showNewMessage && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">New Message</h3>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-4 lg:p-6 w-full max-w-sm lg:max-w-md">
+            <div className="flex items-center justify-between mb-3 lg:mb-4">
+              <h3 className="text-base lg:text-lg font-semibold text-gray-900">New Message</h3>
               <button
                 onClick={() => {
                   setShowNewMessage(false)
                   setUserSearchQuery('')
                   setSearchResults([])
                 }}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 hover:text-gray-600 p-1"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* User Search */}
-            <div className="mb-4">
+            <div className="mb-3 lg:mb-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <input
                   type="text"
-                  placeholder="Search users by name or email..."
+                  placeholder="Search users..."
                   value={userSearchQuery}
                   onChange={(e) => {
                     setUserSearchQuery(e.target.value)
                     searchUsers(e.target.value)
                   }}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-2 text-sm lg:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
             </div>
 
             {/* Search Results */}
-            <div className="max-h-60 overflow-y-auto">
+            <div className="max-h-48 lg:max-h-60 overflow-y-auto">
               {searchingUsers ? (
-                <div className="flex items-center justify-center py-8">
+                <div className="flex items-center justify-center py-6 lg:py-8">
                   <LoadingSpinner text="Searching users..." />
                 </div>
               ) : searchResults.length === 0 ? (
-                <div className="text-center py-8">
-                  <User className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                  <p className="text-gray-500 text-sm">
+                <div className="text-center py-6 lg:py-8">
+                  <User className="w-10 lg:w-12 h-10 lg:h-12 text-gray-400 mx-auto mb-2" />
+                  <p className="text-gray-500 text-xs lg:text-sm">
                     {userSearchQuery ? 'No users found' : 'Start typing to search for users'}
                   </p>
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-1 lg:space-y-2">
                   {searchResults.map((profile) => (
                     <div
                       key={profile.user_id}
                       onClick={() => startConversationWith(profile)}
-                      className="p-3 hover:bg-gray-50 rounded-lg cursor-pointer border border-transparent hover:border-gray-200 transition-colors"
+                      className="p-2 lg:p-3 hover:bg-gray-50 rounded-lg cursor-pointer border border-transparent hover:border-gray-200 transition-colors"
                     >
                       <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                          <span className="text-white font-semibold text-sm">
+                        <div className="w-8 lg:w-10 h-8 lg:h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+                          <span className="text-white font-semibold text-xs lg:text-sm">
                             {profile.name.charAt(0)}
                           </span>
                         </div>
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-gray-900">{profile.name}</h4>
-                          <p className="text-sm text-gray-600 capitalize">{profile.role}</p>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold text-gray-900 text-sm lg:text-base truncate">{profile.name}</h4>
+                          <p className="text-xs lg:text-sm text-gray-600 capitalize truncate">{profile.role}</p>
                           {profile.department && (
-                            <p className="text-xs text-gray-500">{profile.department}</p>
+                            <p className="text-xs text-gray-500 truncate">{profile.department}</p>
                           )}
                         </div>
                       </div>

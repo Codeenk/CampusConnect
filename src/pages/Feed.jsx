@@ -59,8 +59,8 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated }) => {
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl max-w-lg w-full p-6">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-3 lg:p-4">
+      <div className="bg-white rounded-xl max-w-lg w-full p-4 lg:p-6 max-h-[90vh] overflow-y-auto">
         <h2 className="text-xl font-bold mb-4">Create New Post</h2>
         
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -339,21 +339,21 @@ const Feed = () => {
   return (
     <div className="max-w-2xl mx-auto">
       {/* Welcome Header */}
-      <div className="card p-6 mb-6 bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+      <div className="card p-4 lg:p-6 mb-4 lg:mb-6 bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-3 lg:space-y-0">
+          <div className="flex-1">
+            <h1 className="text-xl lg:text-2xl font-bold text-gray-900 leading-tight">
               Welcome back, {user?.profile?.name || 'User'}! 👋
             </h1>
-            <p className="text-gray-600 mt-1">
+            <p className="text-sm lg:text-base text-gray-600 mt-1">
               Share your projects and connect with your campus community
             </p>
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="btn-primary flex items-center space-x-2"
+            className="hidden lg:flex btn-primary items-center justify-center space-x-2 w-full lg:w-auto text-sm lg:text-base"
           >
-            <Plus className="w-5 h-5" />
+            <Plus className="w-4 lg:w-5 h-4 lg:h-5" />
             <span>Create Post</span>
           </button>
         </div>
@@ -361,20 +361,23 @@ const Feed = () => {
 
       {/* Posts Feed */}
       {posts.length === 0 ? (
-        <div className="card p-12 text-center">
-          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <User className="w-8 h-8 text-gray-400" />
+        <div className="card p-8 lg:p-12 text-center">
+          <div className="w-12 lg:w-16 h-12 lg:h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <User className="w-6 lg:w-8 h-6 lg:h-8 text-gray-400" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No posts yet</h3>
-          <p className="text-gray-600 mb-4">
+          <h3 className="text-base lg:text-lg font-semibold text-gray-900 mb-2">No posts yet</h3>
+          <p className="text-sm lg:text-base text-gray-600 mb-4">
             Be the first to share a project with your campus community!
           </p>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="btn-primary"
+            className="hidden lg:inline-flex btn-primary text-sm lg:text-base"
           >
             Create Your First Post
           </button>
+          <p className="lg:hidden text-sm text-gray-500 mt-2">
+            Use the + button in the bottom navigation to create your first post!
+          </p>
         </div>
       ) : (
         posts.map((post) => (
