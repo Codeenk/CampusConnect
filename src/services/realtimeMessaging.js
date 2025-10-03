@@ -1,14 +1,15 @@
 // Real-time messaging service based on industry best practices
 // Implements techniques used by WhatsApp, Telegram, Slack, Discord
+// NOW WITH LIGHTNING-FAST 100ms POLLING - FASTER THAN HUMAN BLINK!
 
 class RealtimeMessagingService {
   constructor() {
     this.pollingInterval = null
     this.connectionState = 'disconnected'
-    this.basePollingRate = 800 // Ultra-fast: 800ms base
+    this.basePollingRate = 100 // LIGHTNING-FAST: 100ms base - faster than blink!
     this.currentPollingRate = this.basePollingRate
-    this.maxPollingRate = 5000
-    this.minPollingRate = 500
+    this.maxPollingRate = 1000 // Even max rate is super fast
+    this.minPollingRate = 50 // Minimum 50ms - INSANELY FAST
     this.backoffMultiplier = 1.2
     this.messageQueue = []
     this.listeners = new Set()
@@ -64,7 +65,7 @@ class RealtimeMessagingService {
     // Keep-alive mechanism
     this.startKeepAlive()
     
-    console.log('🚀 Ultra-fast messaging started - Industry-grade real-time system active')
+    console.log('⚡ LIGHTNING-FAST messaging started - 100ms polling - FASTER THAN BLINK! ⚡')
   }
 
   startPolling() {

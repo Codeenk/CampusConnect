@@ -24,7 +24,7 @@ const Messages = () => {
   const [newMessageAlert, setNewMessageAlert] = useState(false)
   const [lastMessageCount, setLastMessageCount] = useState(0)
   const [connectionState, setConnectionState] = useState(CONNECTION_STATES.DISCONNECTED)
-  const [pollingRate, setPollingRate] = useState(800)
+  const [pollingRate, setPollingRate] = useState(100) // Default to lightning-fast 100ms
   const messagesEndRef = useRef(null)
   const lastFetchTime = useRef(Date.now())
   const conversationPollingRef = useRef(null)
@@ -38,12 +38,12 @@ const Messages = () => {
     const conversationFetcher = () => fetchConversations(true)
     messagingService.start(conversationFetcher)
     
-    // Monitor connection state
+    // Monitor connection state at lightning speed
     const connectionMonitor = setInterval(() => {
       const info = messagingService.getConnectionInfo()
       setConnectionState(info.state)
       setPollingRate(info.pollingRate)
-    }, 1000)
+    }, 200) // Monitor every 200ms for real-time status
     
     // Cleanup on unmount
     return () => {
@@ -86,17 +86,17 @@ const Messages = () => {
       // Fetch messages immediately
       fetchMessages(selectedConversation.partner_id, false)
       
-      // Create ultra-fast message polling service for active conversation
+      // Create LIGHTNING-FAST message polling service for active conversation
       const messageService = new (messagingService.constructor)()
-      messageService.minPollingRate = 400 // Even faster for active chat - 400ms
-      messageService.basePollingRate = 600
+      messageService.minPollingRate = 50 // BLAZING FAST for active chat - 50ms!
+      messageService.basePollingRate = 100 // 100ms standard rate
       
       const messageFetcher = () => fetchMessages(selectedConversation.partner_id, true)
       messageService.start(messageFetcher)
       
       messagePollingRef.current = messageService
       
-      console.log(`🚀 Ultra-fast message polling started for ${selectedConversation.partner_name}`)
+      console.log(`⚡ LIGHTNING-FAST 50ms message polling started for ${selectedConversation.partner_name} - INSTANT MESSAGING! ⚡`)
     } else {
       // Stop message polling when no conversation selected
       if (messagePollingRef.current) {
@@ -231,7 +231,7 @@ const Messages = () => {
         
         // Trigger new message animation and sound
         if (fetchedMessages.length > messages.length) {
-          console.log('🔔 New message received! Ultra-fast delivery!')
+          console.log('⚡ INSTANT MESSAGE DELIVERY - Faster than blink! ⚡')
           setNewMessageAlert(true)
           
           // Play subtle notification sound (optional)
@@ -532,12 +532,12 @@ const Messages = () => {
                 
                 {/* Advanced Real-time Status */}
                 <div className="flex items-center space-x-2">
-                  {/* Connection State Indicator */}
-                  <div className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium ${
-                    connectionState === CONNECTION_STATES.CONNECTED ? 'bg-green-100 text-green-700' :
-                    connectionState === CONNECTION_STATES.CONNECTING ? 'bg-yellow-100 text-yellow-700' :
-                    connectionState === CONNECTION_STATES.ERROR ? 'bg-red-100 text-red-700' :
-                    'bg-gray-100 text-gray-700'
+                  {/* Lightning-Fast Connection State Indicator */}
+                  <div className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium border-2 ${
+                    connectionState === CONNECTION_STATES.CONNECTED ? 'bg-gradient-to-r from-green-400 to-emerald-500 text-white border-green-300 animate-pulse' :
+                    connectionState === CONNECTION_STATES.CONNECTING ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white border-yellow-300 animate-bounce' :
+                    connectionState === CONNECTION_STATES.ERROR ? 'bg-gradient-to-r from-red-400 to-pink-500 text-white border-red-300 animate-pulse' :
+                    'bg-gray-100 text-gray-700 border-gray-300'
                   }`}>
                     {connectionState === CONNECTION_STATES.CONNECTED ? (
                       <><Wifi className="w-3 h-3" /><span>Live</span></>
@@ -553,10 +553,10 @@ const Messages = () => {
                   {/* Performance Indicator */}
                   <button
                     onClick={forceRefresh}
-                    className="text-xs text-gray-500 font-mono bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded transition-colors cursor-pointer"
-                    title={`Polling every ${pollingRate}ms - Click to force refresh`}
+                    className="text-xs text-white font-mono bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 px-2 py-1 rounded transition-all cursor-pointer animate-pulse"
+                    title={`LIGHTNING-FAST polling every ${pollingRate}ms - Faster than blink! Click to force refresh`}
                   >
-                    🚀{pollingRate}ms
+                    ⚡{pollingRate}ms
                   </button>
                   
                   {/* Activity Indicators */}
