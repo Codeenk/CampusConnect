@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useMessages } from '../contexts/MessagesContext'
 import api from '../services/api'
-import { Send, Search, MessageCircle, User, Plus, X } from 'lucide-react'
+import { messagingService, CONNECTION_STATES } from '../services/realtimeMessaging'
+import { Send, Search, MessageCircle, User, Plus, X, Wifi, WifiOff } from 'lucide-react'
 import LoadingSpinner from '../components/LoadingSpinner'
 
 const Messages = () => {
@@ -20,20 +21,34 @@ const Messages = () => {
   const [searchResults, setSearchResults] = useState([])
   const [searchingUsers, setSearchingUsers] = useState(false)
   const [isAutoRefreshing, setIsAutoRefreshing] = useState(false)
+  const [newMessageAlert, setNewMessageAlert] = useState(false)
+  const [lastMessageCount, setLastMessageCount] = useState(0)
+  const [connectionState, setConnectionState] = useState(CONNECTION_STATES.DISCONNECTED)
+  const [pollingRate, setPollingRate] = useState(800)
   const messagesEndRef = useRef(null)
+  const lastFetchTime = useRef(Date.now())
+  const conversationPollingRef = useRef(null)
+  const messagePollingRef = useRef(null)
 
   useEffect(() => {
-    // Fetch conversations immediately
+    // Initialize ultra-fast messaging system
     fetchConversations(false)
     
-    // Set up auto-refresh for conversations every 5 seconds (less frequent than messages)
-    const conversationsInterval = setInterval(() => {
-      fetchConversations(true)
-    }, 5000)
+    // Start industry-grade real-time conversation polling
+    const conversationFetcher = () => fetchConversations(true)
+    messagingService.start(conversationFetcher)
     
-    // Cleanup interval when component unmounts
+    // Monitor connection state
+    const connectionMonitor = setInterval(() => {
+      const info = messagingService.getConnectionInfo()
+      setConnectionState(info.state)
+      setPollingRate(info.pollingRate)
+    }, 1000)
+    
+    // Cleanup on unmount
     return () => {
-      clearInterval(conversationsInterval)
+      messagingService.stop()
+      clearInterval(connectionMonitor)
     }
   }, [])
 
@@ -67,22 +82,34 @@ const Messages = () => {
   }, [conversations, loading])
 
   useEffect(() => {
-    let intervalId = null
-    
     if (selectedConversation) {
-      // Fetch messages immediately when conversation is selected
+      // Fetch messages immediately
       fetchMessages(selectedConversation.partner_id, false)
       
-      // Set up auto-refresh every 2 seconds
-      intervalId = setInterval(() => {
-        fetchMessages(selectedConversation.partner_id, true)
-      }, 2000)
+      // Create ultra-fast message polling service for active conversation
+      const messageService = new (messagingService.constructor)()
+      messageService.minPollingRate = 400 // Even faster for active chat - 400ms
+      messageService.basePollingRate = 600
+      
+      const messageFetcher = () => fetchMessages(selectedConversation.partner_id, true)
+      messageService.start(messageFetcher)
+      
+      messagePollingRef.current = messageService
+      
+      console.log(`🚀 Ultra-fast message polling started for ${selectedConversation.partner_name}`)
+    } else {
+      // Stop message polling when no conversation selected
+      if (messagePollingRef.current) {
+        messagePollingRef.current.stop()
+        messagePollingRef.current = null
+      }
     }
     
-    // Cleanup interval when conversation changes or component unmounts
+    // Cleanup on conversation change
     return () => {
-      if (intervalId) {
-        clearInterval(intervalId)
+      if (messagePollingRef.current) {
+        messagePollingRef.current.stop()
+        messagePollingRef.current = null
       }
     }
   }, [selectedConversation])
@@ -185,20 +212,42 @@ const Messages = () => {
       const response = await api.get(`/messages/conversation/${userId}`)
       const fetchedMessages = response.data.data.messages || []
       
-      // Check if we have new messages to prevent unnecessary updates
+      // Enhanced new message detection for ultra-fast updates
       if (isAutoRefresh && messages.length > 0) {
-        const hasNewMessages = fetchedMessages.length !== messages.length ||
+        // Check for new messages by comparing lengths and latest message IDs
+        const hasNewMessages = fetchedMessages.length > messages.length ||
+          (fetchedMessages.length > 0 && messages.length > 0 && 
+           fetchedMessages[fetchedMessages.length - 1].id !== messages[messages.length - 1].id) ||
           fetchedMessages.some((msg, index) => {
             const existingMsg = messages[index]
             return !existingMsg || msg.id !== existingMsg.id || msg.is_read !== existingMsg.is_read
           })
         
         if (!hasNewMessages) {
-          return // No new messages, skip update
+          // Still show brief loading indicator to show system is active
+          setTimeout(() => setIsAutoRefreshing(false), 200)
+          return
+        }
+        
+        // Trigger new message animation and sound
+        if (fetchedMessages.length > messages.length) {
+          console.log('🔔 New message received! Ultra-fast delivery!')
+          setNewMessageAlert(true)
+          
+          // Play subtle notification sound (optional)
+          try {
+            const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhCCWS4/PSgCkFMYjN9NuOOwgZaLvt559NEAxBPh9JCUkJRTtlORUFEYfQ9NyNPAgXYbbn7qBOCQpKJQRECEEJOjVjsqEbc6fw')
+            audio.volume = 0.1
+            audio.play().catch(() => {})
+          } catch (e) {}
+          
+          // Clear animation after short time
+          setTimeout(() => setNewMessageAlert(false), 2000)
         }
       }
       
       setMessages(fetchedMessages)
+      setLastMessageCount(fetchedMessages.length)
       
       // Count unread messages for this conversation and update global count
       const unreadMessagesCount = fetchedMessages.filter(
@@ -214,8 +263,11 @@ const Messages = () => {
       console.error('Error fetching messages:', error)
     } finally {
       if (isAutoRefresh) {
-        // Show indicator briefly, then hide
-        setTimeout(() => setIsAutoRefreshing(false), 500)
+        // Update performance tracking
+        lastFetchTime.current = Date.now()
+        
+        // Show indicator briefly, then hide with smooth transition
+        setTimeout(() => setIsAutoRefreshing(false), 300)
       }
     }
   }
@@ -276,44 +328,81 @@ const Messages = () => {
     setSearchResults([])
   }
 
+  // Force immediate refresh on user interaction
+  const forceRefresh = () => {
+    messagingService.forceCheck()
+    if (messagePollingRef.current) {
+      messagePollingRef.current.forceCheck()
+    }
+  }
+
   const sendMessage = async (e) => {
     e.preventDefault()
     if (!newMessage.trim() || !selectedConversation) return
 
+    const messageText = newMessage.trim()
+    const tempId = `temp-${Date.now()}`
+    
+    // INSTANT UI UPDATE - Add optimistic message immediately for ultra-fast UX
+    const optimisticMessage = {
+      id: tempId,
+      sender_id: user.id,
+      receiver_id: selectedConversation.partner_id,
+      message: messageText,
+      created_at: new Date().toISOString(),
+      is_read: false,
+      sending: true // Flag to show it's being sent
+    }
+    
+    // Update UI instantly
+    setMessages(prev => [...prev, optimisticMessage])
+    setNewMessage('')
     setSendingMessage(true)
+
     try {
       const response = await api.post('/messages/send', {
         receiverId: selectedConversation.partner_id,
-        message: newMessage.trim()
+        message: messageText
       })
 
-      // Add the new message to the current conversation
+      // Replace optimistic message with real message from server
       const sentMessage = response.data.data.message
-      setMessages(prev => [...prev, sentMessage])
-      setNewMessage('')
+      setMessages(prev => 
+        prev.map(msg => 
+          msg.id === tempId ? { ...sentMessage, sending: false } : msg
+        )
+      )
 
-      // Update or create conversation in the list
+      // Update conversation list with ultra-fast sync
       const updatedConversation = {
         partner_id: selectedConversation.partner_id,
         partner_name: selectedConversation.partner_name,
         partner_role: selectedConversation.partner_role,
-        last_message: newMessage.trim(),
+        last_message: messageText,
         last_message_time: sentMessage.created_at,
         unread_count: 0
       }
 
       setConversations(prev => {
-        // Remove existing conversation if it exists
         const filtered = prev.filter(conv => conv.partner_id !== selectedConversation.partner_id)
-        // Add updated conversation at the top
         return [updatedConversation, ...filtered]
       })
 
-      // Update the selected conversation with the latest info
       setSelectedConversation(updatedConversation)
+      
+      // Force immediate refresh to sync with server ultra-fast
+      forceRefresh()
 
     } catch (error) {
       console.error('Error sending message:', error)
+      
+      // Remove optimistic message on error and show error state
+      setMessages(prev => 
+        prev.map(msg => 
+          msg.id === tempId ? { ...msg, error: true, sending: false } : msg
+        )
+      )
+      
       alert('Failed to send message. Please try again.')
     } finally {
       setSendingMessage(false)
@@ -372,7 +461,10 @@ const Messages = () => {
             filteredConversations.map((conversation) => (
               <div
                 key={conversation.partner_id}
-                onClick={() => setSelectedConversation(conversation)}
+                onClick={() => {
+                  setSelectedConversation(conversation)
+                  forceRefresh() // Immediate sync on conversation switch
+                }}
                 className={`p-3 lg:p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${
                   selectedConversation?.partner_id === conversation.partner_id ? 'bg-blue-50 border-blue-200' : ''
                 }`}
@@ -414,32 +506,81 @@ const Messages = () => {
           <>
             {/* Chat Header */}
             <div className="p-3 lg:p-4 border-b border-gray-200 bg-gray-50">
-              <div className="flex items-center space-x-3">
-                {/* Back button for mobile */}
-                <button 
-                  onClick={() => setSelectedConversation(null)}
-                  className="lg:hidden p-1 hover:bg-gray-200 rounded-md transition-colors"
-                >
-                  <X className="w-5 h-5 text-gray-600" />
-                </button>
-                <div className="w-8 lg:w-10 h-8 lg:h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                  <span className="text-white font-semibold text-xs lg:text-sm">
-                    {selectedConversation.partner_name?.charAt(0) || 'U'}
-                  </span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  {/* Back button for mobile */}
+                  <button 
+                    onClick={() => setSelectedConversation(null)}
+                    className="lg:hidden p-1 hover:bg-gray-200 rounded-md transition-colors"
+                  >
+                    <X className="w-5 h-5 text-gray-600" />
+                  </button>
+                  <div className="w-8 lg:w-10 h-8 lg:h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                    <span className="text-white font-semibold text-xs lg:text-sm">
+                      {selectedConversation.partner_name?.charAt(0) || 'U'}
+                    </span>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 text-sm lg:text-base">
+                      {selectedConversation.partner_name}
+                    </h3>
+                    <p className="text-xs lg:text-sm text-gray-600">
+                      {selectedConversation.partner_role}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900 text-sm lg:text-base">
-                    {selectedConversation.partner_name}
-                  </h3>
-                  <p className="text-xs lg:text-sm text-gray-600">
-                    {selectedConversation.partner_role}
-                  </p>
+                
+                {/* Advanced Real-time Status */}
+                <div className="flex items-center space-x-2">
+                  {/* Connection State Indicator */}
+                  <div className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium ${
+                    connectionState === CONNECTION_STATES.CONNECTED ? 'bg-green-100 text-green-700' :
+                    connectionState === CONNECTION_STATES.CONNECTING ? 'bg-yellow-100 text-yellow-700' :
+                    connectionState === CONNECTION_STATES.ERROR ? 'bg-red-100 text-red-700' :
+                    'bg-gray-100 text-gray-700'
+                  }`}>
+                    {connectionState === CONNECTION_STATES.CONNECTED ? (
+                      <><Wifi className="w-3 h-3" /><span>Live</span></>
+                    ) : connectionState === CONNECTION_STATES.CONNECTING ? (
+                      <><div className="w-3 h-3 border-2 border-yellow-600 border-t-transparent rounded-full animate-spin"></div><span>Sync</span></>
+                    ) : connectionState === CONNECTION_STATES.ERROR ? (
+                      <><WifiOff className="w-3 h-3" /><span>Error</span></>
+                    ) : (
+                      <><WifiOff className="w-3 h-3" /><span>Off</span></>
+                    )}
+                  </div>
+                  
+                  {/* Performance Indicator */}
+                  <button
+                    onClick={forceRefresh}
+                    className="text-xs text-gray-500 font-mono bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded transition-colors cursor-pointer"
+                    title={`Polling every ${pollingRate}ms - Click to force refresh`}
+                  >
+                    🚀{pollingRate}ms
+                  </button>
+                  
+                  {/* Activity Indicators */}
+                  {isAutoRefreshing && (
+                    <div className="flex items-center space-x-1 bg-blue-100 px-2 py-1 rounded-full animate-pulse">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <span className="text-xs text-blue-700 font-medium">Sync</span>
+                    </div>
+                  )}
+                  
+                  {newMessageAlert && (
+                    <div className="flex items-center space-x-1 bg-green-100 px-2 py-1 rounded-full animate-bounce">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-ping"></div>
+                      <span className="text-xs text-green-700 font-medium">New!</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-2 lg:p-4 space-y-3 lg:space-y-4">
+            <div className={`flex-1 overflow-y-auto p-2 lg:p-4 space-y-3 lg:space-y-4 transition-all duration-300 ${
+              newMessageAlert ? 'bg-blue-50' : ''
+            }`}>
               {messages.length === 0 ? (
                 <div className="text-center py-6 lg:py-8">
                   <p className="text-gray-500 text-sm lg:text-base">No messages yet. Start the conversation!</p>
@@ -451,21 +592,39 @@ const Messages = () => {
                     className={`flex ${message.sender_id === user.id ? 'justify-end' : 'justify-start'}`}
                   >
                     <div
-                      className={`max-w-[75%] lg:max-w-xs xl:max-w-md px-3 lg:px-4 py-2 rounded-lg ${
+                      className={`max-w-[75%] lg:max-w-xs xl:max-w-md px-3 lg:px-4 py-2 rounded-lg relative ${
                         message.sender_id === user.id
-                          ? 'bg-blue-500 text-white'
+                          ? message.error ? 'bg-red-500 text-white' : 'bg-blue-500 text-white'
                           : 'bg-gray-200 text-gray-900'
-                      }`}
+                      } ${message.sending ? 'opacity-70' : ''}`}
                     >
                       <p className="text-sm lg:text-sm break-words">{message.message}</p>
-                      <p className={`text-xs mt-1 ${
-                        message.sender_id === user.id ? 'text-blue-100' : 'text-gray-500'
-                      }`}>
-                        {new Date(message.created_at).toLocaleTimeString([], { 
-                          hour: '2-digit', 
-                          minute: '2-digit' 
-                        })}
-                      </p>
+                      <div className={`flex items-center justify-between mt-1`}>
+                        <p className={`text-xs ${
+                          message.sender_id === user.id ? 'text-blue-100' : 'text-gray-500'
+                        }`}>
+                          {new Date(message.created_at).toLocaleTimeString([], { 
+                            hour: '2-digit', 
+                            minute: '2-digit' 
+                          })}
+                        </p>
+                        {message.sender_id === user.id && (
+                          <div className="flex items-center space-x-1">
+                            {message.sending && (
+                              <div className="flex items-center space-x-1">
+                                <div className="w-1 h-1 bg-blue-100 rounded-full animate-pulse"></div>
+                                <span className="text-xs text-blue-100">Sending...</span>
+                              </div>
+                            )}
+                            {message.error && (
+                              <span className="text-xs text-red-100">Failed</span>
+                            )}
+                            {!message.sending && !message.error && (
+                              <div className="w-1 h-1 bg-blue-100 rounded-full"></div>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))

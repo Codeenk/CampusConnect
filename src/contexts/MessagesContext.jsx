@@ -51,13 +51,13 @@ export const MessagesProvider = ({ children }) => {
     setUnreadCount(0)
   }
 
-  // Fetch unread count on component mount and periodically
+  // Fetch unread count on component mount and continuously for ultra-fast real-time updates
   useEffect(() => {
     if (user) {
       fetchUnreadCount()
       
-      // Refresh unread count every 30 seconds
-      const interval = setInterval(fetchUnreadCount, 30000)
+      // ULTRA-FAST polling every 1 second for instant notifications (industry standard)
+      const interval = setInterval(fetchUnreadCount, 1000)
       return () => clearInterval(interval)
     }
   }, [user])
