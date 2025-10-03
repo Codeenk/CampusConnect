@@ -1,12 +1,14 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const http = require('http');
+const MessageWebSocketServer = require('./websocket/messageServer');
 
 // Load environment variables
 dotenv.config();
 
 // Check critical environment variables
-const requiredEnvVars = ['JWT_SECRET'];
+const requiredEnvVars = ['JWT_SECRET', 'SUPABASE_URL', 'SUPABASE_SERVICE_KEY'];
 const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
 
 if (missingEnvVars.length > 0) {
@@ -23,6 +25,7 @@ const endorseRoutes = require('./routes/endorse');
 const resumeRoutes = require('./routes/resume');
 const adminRoutes = require('./routes/admin');
 const messageRoutes = require('./routes/messages');
+const optimizedMessageRoutes = require('./routes/messagesOptimized');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -42,7 +45,8 @@ app.use('/api/posts', postRoutes);
 app.use('/api/endorse', endorseRoutes);
 app.use('/api/resume', resumeRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/messages', messageRoutes);
+app.use('/api/messages', optimizedMessageRoutes); // Use optimized routes
+app.use('/api/messages/legacy', messageRoutes); // Keep legacy routes as fallback
 
 // ✅ Root route (optional but helpful)
 app.get('/', (req, res) => {
@@ -81,9 +85,24 @@ app.use('*', (req, res) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 Campus Connect Backend running on port ${PORT}`);
-  console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
+// Create HTTP server and initialize WebSocket
+const server = http.createServer(app);
+
+// Initialize WebSocket server for real-time messaging
+const wsServer = new MessageWebSocketServer(server);
+
+// Add WebSocket stats endpoint
+app.get('/api/ws/stats', (req, res) => {
+  res.json({
+    success: true,
+    data: wsServer.getStats()
+  });
 });
 
-module.exports = app;
+server.listen(PORT, () => {
+  console.log(`🚀 Campus Connect Backend running on port ${PORT}`);
+  console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
+  console.log(`🔌 WebSocket server ready at ws://localhost:${PORT}/ws/messages`);
+});
+
+module.exports = { app, server, wsServer };
