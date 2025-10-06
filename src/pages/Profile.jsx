@@ -28,7 +28,6 @@ import {
   Trophy,
   Zap
 } from 'lucide-react'
-import ProfileFieldDebugger from '../components/ProfileFieldDebugger'
 import LoadingSpinner from '../components/LoadingSpinner'
 
 // Editable Field Component for inline editing
@@ -61,17 +60,12 @@ const EditableField = ({ label, value, field, type = 'text', canEdit, onSave, pl
   }
 
   if (!canEdit) {
-    // Read-only mode - Enhanced display for viewing profiles
-    const hasValue = value && value.toString().trim() !== '' && value.toString().trim() !== 'null' && value.toString().trim() !== 'undefined';
-    const displayValue = hasValue ? value.toString() : (rawValue && rawValue.toString().trim() ? rawValue.toString() : null);
-    
+    // Read-only mode
     return (
       <div className="space-y-1">
         <span className="text-sm font-medium text-gray-600">{label}</span>
         <div className="px-3 py-2 border border-gray-200 rounded-md bg-gray-50">
-          <span className={`${displayValue ? 'text-gray-900' : 'text-gray-500 italic'}`}>
-            {displayValue || 'Not provided'}
-          </span>
+          <span className="text-gray-900">{value || 'Not set'}</span>
         </div>
       </div>
     )
@@ -1566,14 +1560,6 @@ const Profile = () => {
       }
       
       console.log('Profile response:', profileResponse.data)
-      console.log('Raw profile data from API:', profileData)
-      console.log('Profile data fields:', Object.keys(profileData || {}))
-      
-      // Log specific field values for debugging
-      const fieldsToCheck = ['name', 'bio', 'headline', 'location', 'department', 'major', 'minor', 'year', 'graduation_year', 'gpa', 'student_id', 'hometown', 'phone_number', 'github_url', 'linkedin_url', 'portfolio_url'];
-      fieldsToCheck.forEach(field => {
-        console.log(`API Field ${field}:`, profileData[field]);
-      });
       
       // Check if response has the expected structure
       if (!profileResponse.data || !profileResponse.data.success) {
@@ -1660,23 +1646,6 @@ const Profile = () => {
       
       // Debug logging
       console.log('Raw achievements:', profileData.achievements)
-      console.log('✅ Profile state set with data:', {
-        name: profileData.name,
-        headline: headline,
-        location: location,
-        department: profileData.department,
-        major: profileData.major,
-        minor: profileData.minor,
-        year: profileData.year,
-        graduation_year: profileData.graduation_year,
-        gpa: profileData.gpa,
-        student_id: profileData.student_id,
-        hometown: profileData.hometown,
-        phone_number: profileData.phone_number,
-        github_url: profileData.github_url,
-        linkedin_url: profileData.linkedin_url,
-        portfolio_url: profileData.portfolio_url
-      })
       console.log('Extracted headline:', headline)
       console.log('Extracted location:', location)
       console.log('Direct experience data:', profileData.experience)
@@ -1890,9 +1859,6 @@ const Profile = () => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-4 lg:space-y-6">
-      {/* Debug Component - Remove in production */}
-      <ProfileFieldDebugger profile={profile} canEdit={canEdit} />
-      
       {/* Read-Only Mode Banner */}
       {isReadOnlyMode && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 lg:p-4 flex items-center space-x-3">
@@ -1952,8 +1918,8 @@ const Profile = () => {
           <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start mb-2">
             <div className="flex-1">
               <h1 className="text-xl lg:text-3xl font-bold text-gray-900 leading-tight">{profile?.name || 'Unknown User'}</h1>
-              {/* Show custom headline - always display section for consistency */}
-              {profile?.headline && profile.headline.trim() ? (
+              {/* Show custom headline if available */}
+              {profile?.headline ? (
                 <div>
                   <p className="text-sm lg:text-lg text-gray-700 mt-1 font-medium leading-snug">
                     {profile.headline}
@@ -1977,16 +1943,12 @@ const Profile = () => {
                   }
                 </p>
               )}
-              {/* Always show location section for consistency */}
-              <div className="flex items-center space-x-1 mt-2 text-gray-600">
-                <MapPin className="w-4 h-4" />
-                <span className="text-sm">
-                  {profile?.location && profile.location.trim() 
-                    ? profile.location 
-                    : (canEdit ? 'Add your location' : 'Location not provided')
-                  }
-                </span>
-              </div>
+              {profile.location && (
+                <div className="flex items-center space-x-1 mt-2 text-gray-600">
+                  <MapPin className="w-4 h-4" />
+                  <span className="text-sm">{profile.location}</span>
+                </div>
+              )}
             </div>
             {canEdit && (
               <button
@@ -2061,15 +2023,9 @@ const Profile = () => {
             </button>
           )}
         </div>
-        <div className="text-gray-700 whitespace-pre-wrap">
-          {profile?.bio && profile.bio.trim() ? (
-            <p>{profile.bio}</p>
-          ) : (
-            <p className="text-gray-500 italic">
-              {canEdit ? 'Tell others about yourself...' : 'No description provided.'}
-            </p>
-          )}
-        </div>
+        <p className="text-gray-700 whitespace-pre-wrap">
+          {profile?.bio || 'No description available.'}
+        </p>
       </div>
 
       {/* Academic & Personal Information Section - Fully Editable */}

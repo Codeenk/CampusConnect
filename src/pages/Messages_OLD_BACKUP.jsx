@@ -2,53 +2,46 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useMessages } from '../contexts/MessagesContext'
 import api from '../services/api'
-import { messagingService, CONNECTION_STATES } from '../services/realtimeMessaging'
-import { Send, Search, MessageCircle, User, Plus, X, Wifi, WifiOff } from 'lucide-react'
+import { Send, Search, MessageCircle, User, Plus, X } from 'lucide-react'
 import LoadingSpinner from '../components/LoadingSpinner'
+import ConnectionStatusIndicator from '../components/ConnectionStatusIndicator'
 
 const Messages = () => {
   const { user } = useAuth()
-  const { updateUnreadCount, decrementUnreadCount } = useMessages()
-  const [conversations, setConversations] = useState([])
+  const { 
+    conversations,
+    activeConversation,
+    messages,
+    loading,
+    connectionStatus,
+    sendMessage: sendMessageOptimized,
+    fetchConversations: fetchConversationsOptimized,
+    setActiveConversation,
+    startConversation,
+    getConnectionInfo
+  } = useMessages()
+  
   const [selectedConversation, setSelectedConversation] = useState(null)
-  const [messages, setMessages] = useState([])
   const [newMessage, setNewMessage] = useState('')
-  const [loading, setLoading] = useState(true)
   const [sendingMessage, setSendingMessage] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [showNewMessage, setShowNewMessage] = useState(false)
   const [userSearchQuery, setUserSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState([])
   const [searchingUsers, setSearchingUsers] = useState(false)
-  const [isAutoRefreshing, setIsAutoRefreshing] = useState(false)
-  const [newMessageAlert, setNewMessageAlert] = useState(false)
-  const [lastMessageCount, setLastMessageCount] = useState(0)
-  const [connectionState, setConnectionState] = useState(CONNECTION_STATES.DISCONNECTED)
-  const [pollingRate, setPollingRate] = useState(100) // Default to lightning-fast 100ms
+  
+  // Refs for messaging functionality
   const messagesEndRef = useRef(null)
-  const lastFetchTime = useRef(Date.now())
-  const conversationPollingRef = useRef(null)
-  const messagePollingRef = useRef(null)
 
   useEffect(() => {
-    // Initialize ultra-fast messaging system
-    fetchConversations(false)
+    // Initialize optimized messaging - context handles everything
+    if (user) {
+      fetchConversationsOptimized()
+    }
     
-    // Start industry-grade real-time conversation polling
-    const conversationFetcher = () => fetchConversations(true)
-    messagingService.start(conversationFetcher)
-    
-    // Monitor connection state at lightning speed
-    const connectionMonitor = setInterval(() => {
-      const info = messagingService.getConnectionInfo()
-      setConnectionState(info.state)
-      setPollingRate(info.pollingRate)
-    }, 200) // Monitor every 200ms for real-time status
-    
-    // Cleanup on unmount
+    // Cleanup is handled by MessagesContext
     return () => {
-      messagingService.stop()
-      clearInterval(connectionMonitor)
+      // No cleanup needed here - MessagesContext handles it
     }
   }, [])
 
@@ -83,34 +76,20 @@ const Messages = () => {
 
   useEffect(() => {
     if (selectedConversation) {
-      // Fetch messages immediately
-      fetchMessages(selectedConversation.partner_id, false)
+      // Set active conversation in context for optimized messaging
+      setActiveConversation(selectedConversation)
       
-      // Create LIGHTNING-FAST message polling service for active conversation
-      const messageService = new (messagingService.constructor)()
-      messageService.minPollingRate = 50 // BLAZING FAST for active chat - 50ms!
-      messageService.basePollingRate = 100 // 100ms standard rate
-      
-      const messageFetcher = () => fetchMessages(selectedConversation.partner_id, true)
-      messageService.start(messageFetcher)
-      
-      messagePollingRef.current = messageService
-      
-      console.log(`⚡ LIGHTNING-FAST 50ms message polling started for ${selectedConversation.partner_name} - INSTANT MESSAGING! ⚡`)
-    } else {
-      // Stop message polling when no conversation selected
-      if (messagePollingRef.current) {
-        messagePollingRef.current.stop()
-        messagePollingRef.current = null
-      }
+      console.log(`✅ Optimized messaging active for conversation - Real-time updates enabled! ⚡`)
     }
     
-    // Cleanup on conversation change
+    // Update active conversation in context
+    if (selectedConversation) {
+      setActiveConversation(selectedConversation)
+    }
+    
+    // Cleanup handled by MessagesContext
     return () => {
-      if (messagePollingRef.current) {
-        messagePollingRef.current.stop()
-        messagePollingRef.current = null
-      }
+      // Context handles cleanup automatically
     }
   }, [selectedConversation])
 
@@ -330,88 +309,43 @@ const Messages = () => {
 
   // Force immediate refresh on user interaction
   const forceRefresh = () => {
-    messagingService.forceCheck()
-    if (messagePollingRef.current) {
-      messagePollingRef.current.forceCheck()
-    }
+    // Refresh handled automatically by optimized messaging context
+    fetchConversationsOptimized()
   }
 
-  const sendMessage = async (e) => {
+  const handleSendMessage = async (e) => {
     e.preventDefault()
-    if (!newMessage.trim() || !selectedConversation) return
+    if (!newMessage.trim() || !activeConversation) return
 
     const messageText = newMessage.trim()
-    const tempId = `temp-${Date.now()}`
-    
-    // INSTANT UI UPDATE - Add optimistic message immediately for ultra-fast UX
-    const optimisticMessage = {
-      id: tempId,
-      sender_id: user.id,
-      receiver_id: selectedConversation.partner_id,
-      message: messageText,
-      created_at: new Date().toISOString(),
-      is_read: false,
-      sending: true // Flag to show it's being sent
-    }
-    
-    // Update UI instantly
-    setMessages(prev => [...prev, optimisticMessage])
-    setNewMessage('')
     setSendingMessage(true)
+    setNewMessage('')
 
     try {
-      const response = await api.post('/messages/send', {
-        receiverId: selectedConversation.partner_id,
-        message: messageText
-      })
-
-      // Replace optimistic message with real message from server
-      const sentMessage = response.data.data.message
-      setMessages(prev => 
-        prev.map(msg => 
-          msg.id === tempId ? { ...sentMessage, sending: false } : msg
-        )
+      // Use optimized messaging service
+      const result = await sendMessageOptimized(
+        activeConversation.participant?.id || activeConversation.participant_id,
+        messageText,
+        'text'
       )
 
-      // Update conversation list with ultra-fast sync
-      const updatedConversation = {
-        partner_id: selectedConversation.partner_id,
-        partner_name: selectedConversation.partner_name,
-        partner_role: selectedConversation.partner_role,
-        last_message: messageText,
-        last_message_time: sentMessage.created_at,
-        unread_count: 0
+      if (!result.success) {
+        // If sending failed, show error and restore message
+        console.error('Failed to send message:', result.error)
+        setNewMessage(messageText) // Restore message text
       }
-
-      setConversations(prev => {
-        const filtered = prev.filter(conv => conv.partner_id !== selectedConversation.partner_id)
-        return [updatedConversation, ...filtered]
-      })
-
-      setSelectedConversation(updatedConversation)
-      
-      // Force immediate refresh to sync with server ultra-fast
-      forceRefresh()
-
     } catch (error) {
-      console.error('Error sending message:', error)
-      
-      // Remove optimistic message on error and show error state
-      setMessages(prev => 
-        prev.map(msg => 
-          msg.id === tempId ? { ...msg, error: true, sending: false } : msg
-        )
-      )
-      
-      alert('Failed to send message. Please try again.')
+      console.error('Send message error:', error)
+      setNewMessage(messageText) // Restore message text on error
     } finally {
       setSendingMessage(false)
     }
   }
 
-  const filteredConversations = conversations.filter(conv =>
-    conv.partner_name.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  const filteredConversations = conversations.filter(conv => {
+    const partnerName = conv.partner_name || conv.participant?.name || 'Unknown User';
+    return partnerName.toLowerCase().includes(searchQuery.toLowerCase());
+  })
 
   if (loading) {
     return <LoadingSpinner text="Loading messages..." />
@@ -424,7 +358,10 @@ const Messages = () => {
         {/* Header */}
         <div className="p-3 lg:p-4 border-b border-gray-200">
           <div className="flex items-center justify-between mb-3 lg:mb-4">
-            <h2 className="text-lg lg:text-xl font-bold text-gray-900">Messages</h2>
+            <div className="flex items-center space-x-3">
+              <h2 className="text-lg lg:text-xl font-bold text-gray-900">Messages</h2>
+              <ConnectionStatusIndicator />
+            </div>
             <button
               onClick={() => setShowNewMessage(true)}
               className="btn-primary flex items-center space-x-1 lg:space-x-2 px-2 lg:px-3 py-1 lg:py-2 text-sm lg:text-base"
@@ -472,13 +409,13 @@ const Messages = () => {
                 <div className="flex items-center space-x-3">
                   <div className="w-8 lg:w-10 h-8 lg:h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
                     <span className="text-white font-semibold text-xs lg:text-sm">
-                      {conversation.partner_name.charAt(0)}
+                      {(conversation.partner_name || conversation.participant?.name || 'U').charAt(0)}
                     </span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
                       <h3 className="font-semibold text-gray-900 truncate text-sm lg:text-base">
-                        {conversation.partner_name}
+                        {conversation.partner_name || conversation.participant?.name || 'Unknown User'}
                       </h3>
                       <span className="text-xs text-gray-500 capitalize ml-2">
                         {conversation.partner_role}
@@ -517,12 +454,12 @@ const Messages = () => {
                   </button>
                   <div className="w-8 lg:w-10 h-8 lg:h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
                     <span className="text-white font-semibold text-xs lg:text-sm">
-                      {selectedConversation.partner_name?.charAt(0) || 'U'}
+                      {(selectedConversation.partner_name || selectedConversation.participant?.name || 'U').charAt(0)}
                     </span>
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900 text-sm lg:text-base">
-                      {selectedConversation.partner_name}
+                      {selectedConversation.partner_name || selectedConversation.participant?.name || 'Unknown User'}
                     </h3>
                     <p className="text-xs lg:text-sm text-gray-600">
                       {selectedConversation.partner_role}
@@ -534,17 +471,17 @@ const Messages = () => {
                 <div className="flex items-center space-x-2">
                   {/* Lightning-Fast Connection State Indicator */}
                   <div className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium border-2 ${
-                    connectionState === CONNECTION_STATES.CONNECTED ? 'bg-gradient-to-r from-green-400 to-emerald-500 text-white border-green-300 animate-pulse' :
-                    connectionState === CONNECTION_STATES.CONNECTING ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white border-yellow-300 animate-bounce' :
-                    connectionState === CONNECTION_STATES.ERROR ? 'bg-gradient-to-r from-red-400 to-pink-500 text-white border-red-300 animate-pulse' :
+                    connectionStatus === 'connected' ? 'bg-gradient-to-r from-green-400 to-emerald-500 text-white border-green-300 animate-pulse' :
+                    connectionStatus === 'polling' ? 'bg-gradient-to-r from-blue-400 to-indigo-500 text-white border-blue-300' :
+                    connectionStatus === 'disconnected' ? 'bg-gradient-to-r from-red-400 to-pink-500 text-white border-red-300' :
                     'bg-gray-100 text-gray-700 border-gray-300'
                   }`}>
-                    {connectionState === CONNECTION_STATES.CONNECTED ? (
+                    {connectionStatus === 'connected' ? (
                       <><Wifi className="w-3 h-3" /><span>Live</span></>
-                    ) : connectionState === CONNECTION_STATES.CONNECTING ? (
-                      <><div className="w-3 h-3 border-2 border-yellow-600 border-t-transparent rounded-full animate-spin"></div><span>Sync</span></>
-                    ) : connectionState === CONNECTION_STATES.ERROR ? (
-                      <><WifiOff className="w-3 h-3" /><span>Error</span></>
+                    ) : connectionStatus === 'polling' ? (
+                      <><div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div><span>Sync</span></>
+                    ) : connectionStatus === 'disconnected' ? (
+                      <><WifiOff className="w-3 h-3" /><span>Offline</span></>
                     ) : (
                       <><WifiOff className="w-3 h-3" /><span>Off</span></>
                     )}
@@ -635,7 +572,7 @@ const Messages = () => {
 
             {/* Message Input */}
             <div className="p-3 lg:p-4 border-t border-gray-200">
-              <form onSubmit={sendMessage} className="flex space-x-2 lg:space-x-3">
+              <form onSubmit={handleSendMessage} className="flex space-x-2 lg:space-x-3">
                 <input
                   type="text"
                   value={newMessage}

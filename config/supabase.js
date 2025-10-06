@@ -1,8 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
 
-// Ensure environment variables are loaded
-require('dotenv').config();
-
 // Initialize Supabase client
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY; // Use service key for backend operations
