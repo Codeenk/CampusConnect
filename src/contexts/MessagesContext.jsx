@@ -56,8 +56,8 @@ export const MessagesProvider = ({ children }) => {
     if (user) {
       fetchUnreadCount()
       
-      // LIGHTNING-FAST polling every 100ms for INSTANT notifications - faster than blink!
-      const interval = setInterval(fetchUnreadCount, 100)
+      // OPTIMIZED polling every 500ms for notifications - balanced performance
+      const interval = setInterval(fetchUnreadCount, 500)
       return () => clearInterval(interval)
     }
   }, [user])

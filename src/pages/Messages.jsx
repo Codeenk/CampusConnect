@@ -24,7 +24,7 @@ const Messages = () => {
   const [newMessageAlert, setNewMessageAlert] = useState(false)
   const [lastMessageCount, setLastMessageCount] = useState(0)
   const [connectionState, setConnectionState] = useState(CONNECTION_STATES.DISCONNECTED)
-  const [pollingRate, setPollingRate] = useState(100) // Default to lightning-fast 100ms
+  const [pollingRate, setPollingRate] = useState(250) // Default to optimized 250ms
   const messagesEndRef = useRef(null)
   const lastFetchTime = useRef(Date.now())
   const conversationPollingRef = useRef(null)
@@ -43,7 +43,7 @@ const Messages = () => {
       const info = messagingService.getConnectionInfo()
       setConnectionState(info.state)
       setPollingRate(info.pollingRate)
-    }, 200) // Monitor every 200ms for real-time status
+    }, 500) // Monitor every 500ms for real-time status
     
     // Cleanup on unmount
     return () => {
@@ -88,8 +88,8 @@ const Messages = () => {
       
       // Create LIGHTNING-FAST message polling service for active conversation
       const messageService = new (messagingService.constructor)()
-      messageService.minPollingRate = 50 // BLAZING FAST for active chat - 50ms!
-      messageService.basePollingRate = 100 // 100ms standard rate
+      messageService.minPollingRate = 100 // FAST for active chat - 100ms
+      messageService.basePollingRate = 250 // 250ms standard rate
       
       const messageFetcher = () => fetchMessages(selectedConversation.partner_id, true)
       messageService.start(messageFetcher)

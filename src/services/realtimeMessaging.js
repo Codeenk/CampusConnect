@@ -6,10 +6,10 @@ class RealtimeMessagingService {
   constructor() {
     this.pollingInterval = null
     this.connectionState = 'disconnected'
-    this.basePollingRate = 100 // LIGHTNING-FAST: 100ms base - faster than blink!
+    this.basePollingRate = 250 // OPTIMIZED: 250ms base - balanced performance
     this.currentPollingRate = this.basePollingRate
-    this.maxPollingRate = 1000 // Even max rate is super fast
-    this.minPollingRate = 50 // Minimum 50ms - INSANELY FAST
+    this.maxPollingRate = 2000 // Max rate for background
+    this.minPollingRate = 100 // Minimum 100ms for active use - still very fast
     this.backoffMultiplier = 1.2
     this.messageQueue = []
     this.listeners = new Set()
