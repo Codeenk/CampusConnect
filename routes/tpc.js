@@ -22,14 +22,28 @@ const supabase = createClient(
 // Middleware to check TPC role
 const checkTPCRole = async (req, res, next) => {
   try {
+    const userId = req.user.userId || req.user.id || req.user.user_id;
+    
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+    
     const { data: profile, error } = await supabase
       .from('profiles')
       .select('role')
-      .eq('id', req.user.id)
+      .eq('user_id', userId)
       .single();
     
-    if (error || !profile || profile.role !== 'tpc_admin') {
-      return res.status(403).json({ error: 'TPC access required' });
+    if (error) {
+      console.error('Error fetching user profile:', error);
+      return res.status(403).json({ error: 'Unable to verify TPC access' });
+    }
+    
+    if (!profile || !['admin', 'tpc_admin'].includes(profile.role)) {
+      return res.status(403).json({ 
+        error: 'TPC access required',
+        detail: `Current role: ${profile?.role || 'none'}. Required: admin or tpc_admin`
+      });
     }
     
     next();
@@ -550,5 +564,61 @@ router.post('/export/batch', exportBatchResumes);
 // Export job management
 router.get('/export/jobs/:jobId', getExportJob);
 router.get('/export/history', getExportHistory);
+
+// Filter data endpoints (for dropdowns)
+router.get('/departments', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('department')
+      .not('department', 'is', null)
+      .eq('role', 'student');
+    
+    if (error) throw error;
+    
+    const departments = [...new Set(data.map(p => p.department))].filter(Boolean).sort();
+    res.json({ success: true, data: { departments } });
+  } catch (error) {
+    console.error('Error fetching departments:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch departments' });
+  }
+});
+
+router.get('/skills', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('skills')
+      .not('skills', 'is', null)
+      .eq('role', 'student');
+    
+    if (error) throw error;
+    
+    const allSkills = data.flatMap(p => p.skills || []);
+    const skills = [...new Set(allSkills)].filter(Boolean).sort();
+    res.json({ success: true, data: { skills } });
+  } catch (error) {
+    console.error('Error fetching skills:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch skills' });
+  }
+});
+
+router.get('/graduation-years', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('graduation_year')
+      .not('graduation_year', 'is', null)
+      .eq('role', 'student');
+    
+    if (error) throw error;
+    
+    const years = [...new Set(data.map(p => p.graduation_year))].filter(Boolean).sort();
+    res.json({ success: true, data: { years } });
+  } catch (error) {
+    console.error('Error fetching graduation years:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch graduation years' });
+  }
+});
 
 module.exports = router;

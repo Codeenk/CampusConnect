@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Search, Filter, X, ChevronDown } from 'lucide-react';
 import apiService from '../services/api';
+import LoadingSpinner from './LoadingSpinner';
 
 const SearchFilters = ({ filters, onFiltersChange, onSearch, loading }) => {
   const [departments, setDepartments] = useState([]);

@@ -17,9 +17,8 @@ const CCBot = ({ isOpen, onClose }) => {
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
 
-  // Gemini API configuration
-  const API_KEY = "AIzaSyCxElpRYzCP2q5yUT80MylOQHRXEeHa3sQ"
-  const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`
+  // We'll call our backend proxy instead of the Gemini API directly
+  const API_PROXY = '/api/ai/generate'
 
   useEffect(() => {
     scrollToBottom()
@@ -88,19 +87,12 @@ Now respond to this message: "${userMessage}"`
   const callGeminiAPI = async (message) => {
     try {
       const systemPrompt = generateBotPersonality(message, user?.profile)
-      
-      const response = await fetch(API_URL, {
+
+      // Call server-side proxy
+      const response = await fetch(API_PROXY, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: systemPrompt
-            }]
-          }]
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: message, userProfile: user?.profile })
       })
 
       if (!response.ok) {
@@ -108,12 +100,8 @@ Now respond to this message: "${userMessage}"`
       }
 
       const data = await response.json()
-      
-      if (data.candidates && data.candidates[0] && data.candidates[0].content) {
-        return data.candidates[0].content.parts[0].text
-      } else {
-        throw new Error('Invalid response format from Gemini API')
-      }
+      if (data.success && data.text) return data.text
+      throw new Error(data.error || 'Invalid response from AI proxy')
     } catch (error) {
       console.error('Error calling Gemini API:', error)
       return "I apologize, but I'm having trouble connecting right now. As your Campus Connect mentor, I'm usually here to help with academic guidance, career advice, and campus life tips. Please try again in a moment! 😊"

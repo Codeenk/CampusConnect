@@ -135,7 +135,7 @@ const StudentsGrid = ({
     );
   }
 
-  if (students.length === 0) {
+  if (!students || students.length === 0) {
     return (
       <div className="text-center py-12">
         <Search className="w-12 h-12 text-gray-400 mx-auto mb-4" />

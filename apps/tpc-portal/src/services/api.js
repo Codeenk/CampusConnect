@@ -3,7 +3,7 @@ import axios from 'axios';
 class ApiService {
   constructor() {
     this.api = axios.create({
-      baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api',
+      baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3002/api',
       timeout: 30000,
       headers: {
         'Content-Type': 'application/json',
@@ -118,6 +118,34 @@ class ApiService {
   async getExportHistory() {
     const response = await this.api.get(`/tpc/export/history`);
     return response.data.data.jobs;
+  }
+
+  // Compatibility methods expected by UI
+  async getExportJobs() {
+    const response = await this.api.get('/tpc/export/jobs');
+    // backend may return plain array or a wrapped object
+    if (response && response.data) {
+      // If backend returns { success: true, data: { jobs: [...] } }
+      if (response.data.data && response.data.data.jobs) return response.data.data.jobs;
+      // If backend returns { jobs: [...] } or plain array
+      if (Array.isArray(response.data)) return response.data;
+      if (response.data.jobs) return response.data.jobs;
+      // Fallback to nested data
+      return response.data.data || response.data;
+    }
+    return [];
+  }
+
+  async deleteExportJob(jobId) {
+    const response = await this.api.delete(`/tpc/export/jobs/${jobId}`);
+    return response.data;
+  }
+
+  async downloadExport(jobId) {
+    // Use a navigation to the download endpoint so server can redirect to the storage URL
+    // This avoids trying to handle cross-origin redirects with axios/blobs.
+    const url = `${this.api.defaults.baseURL.replace(/\/\/$/, '')}/tpc/export/${jobId}/download`;
+    window.location.href = url;
   }
 
   // Department and stats methods
