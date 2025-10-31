@@ -16,7 +16,18 @@ const createPost = async (req, res) => {
       });
     }
 
-    const { title, description, tags } = req.body;
+    const { 
+      title, 
+      description, 
+      content, 
+      tags, 
+      category, 
+      github_repo, 
+      live_demo_url, 
+      images, 
+      videos, 
+      documents 
+    } = req.body;
     const userId = req.user.id;
 
     // Create post
@@ -25,7 +36,14 @@ const createPost = async (req, res) => {
       .insert({
         title,
         description,
-        tags: Array.isArray(tags) ? tags : [tags].filter(Boolean),
+        content: content || '',
+        tags: Array.isArray(tags) ? tags : (tags ? [tags] : []).filter(Boolean),
+        category: category || '',
+        github_repo: github_repo || '',
+        live_demo_url: live_demo_url || '',
+        images: Array.isArray(images) ? images : [],
+        videos: Array.isArray(videos) ? videos : [],
+        documents: Array.isArray(documents) ? documents : [],
         created_by: userId
       })
       .select(`
@@ -66,6 +84,49 @@ const createPost = async (req, res) => {
 };
 
 /**
+ * Track post view
+ */
+const trackPostView = async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const userId = req.user.id;
+    const userAgent = req.get('User-Agent') || '';
+    const ipAddress = req.ip;
+
+    // Insert view record (will be ignored if user already viewed today due to unique constraint)
+    const { error } = await supabase
+      .from('post_views')
+      .insert({
+        post_id: postId,
+        user_id: userId,
+        ip_address: ipAddress,
+        user_agent: userAgent,
+        viewed_date: new Date().toISOString().split('T')[0] // Today's date
+      });
+
+    // Update views count (this should be done via database trigger in production)
+    const { data: viewCount } = await supabase
+      .from('post_views')
+      .select('id', { count: 'exact' })
+      .eq('post_id', postId);
+
+    await supabase
+      .from('posts')
+      .update({ views_count: viewCount.count || 0 })
+      .eq('id', postId);
+
+    res.json({ success: true, message: 'View tracked' });
+  } catch (error) {
+    console.error('Track view error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to track view',
+      error: error.message
+    });
+  }
+};
+
+/**
  * Get post feed with pagination
  */
 const getFeed = async (req, res) => {
@@ -76,7 +137,13 @@ const getFeed = async (req, res) => {
     let query = supabase
       .from('posts')
       .select(`
-        *
+        *,
+        creator:profiles!created_by (
+          name,
+          role,
+          department,
+          avatar_url
+        )
       `)
       .range(offset, offset + limit - 1)
       .order('created_at', { ascending: false });
@@ -427,5 +494,6 @@ module.exports = {
   updatePost,
   deletePost,
   likePost,
-  commentPost
+  commentPost,
+  trackPostView
 };

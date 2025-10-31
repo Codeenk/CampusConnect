@@ -32,6 +32,8 @@ const endorseRoutes = require('./routes/endorse');
 const resumeRoutes = require('./routes/resume');
 const adminRoutes = require('./routes/admin');
 const messageRoutes = require('./routes/messages');
+const notificationRoutes = require('./routes/notifications');
+const tpcRoutes = require('./routes/tpc');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -65,6 +67,8 @@ app.use('/api/endorse', endorseRoutes);
 app.use('/api/resume', resumeRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/tpc', tpcRoutes);
 
 // ✅ Root route (optional but helpful)
 app.get('/', (req, res) => {

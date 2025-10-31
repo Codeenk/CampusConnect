@@ -1,0 +1,17 @@
+{
+  "name": "start-tpc-portal",
+  "version": "1.0.0",
+  "description": "Startup script for TPC Portal development environment",
+  "scripts": {
+    "setup": "npm install && npm run migrate",
+    "migrate": "node run-migration.js",
+    "dev": "npm run migrate && vite",
+    "build": "npm run migrate && npm run type-check && vite build",
+    "start": "npm run setup && npm run dev",
+    "check": "npm run type-check && npm run lint",
+    "preview": "vite preview",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint . --ext ts,tsx,js,jsx --report-unused-disable-directives --max-warnings 0",
+    "lint:fix": "eslint . --ext ts,tsx,js,jsx --fix"
+  }
+}

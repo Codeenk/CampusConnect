@@ -8,7 +8,14 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated }) => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    tags: ''
+    content: '',
+    tags: '',
+    category: '',
+    github_repo: '',
+    live_demo_url: '',
+    images: [],
+    videos: [],
+    documents: []
   })
   const [loading, setLoading] = useState(false)
 
@@ -30,11 +37,18 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated }) => {
 
     try {
       const postData = {
-        title: formData.title.trim(),
-        description: formData.description.trim(),
-        tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag)
+        title: formData.title,
+        description: formData.description,
+        content: formData.content,
+        tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
+        category: formData.category,
+        github_repo: formData.github_repo,
+        live_demo_url: formData.live_demo_url,
+        images: formData.images,
+        videos: formData.videos,
+        documents: formData.documents
       }
-
+      
       console.log('Sending post data:', postData)
       console.log('Title length:', postData.title.length)
       console.log('Description length:', postData.description.length)
@@ -43,7 +57,18 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated }) => {
       console.log('Post created successfully:', response.data)
       onPostCreated()
       onClose()
-      setFormData({ title: '', description: '', tags: '' })
+      setFormData({ 
+        title: '', 
+        description: '', 
+        content: '',
+        tags: '', 
+        category: '',
+        github_repo: '',
+        live_demo_url: '',
+        images: [],
+        videos: [],
+        documents: []
+      })
     } catch (error) {
       console.error('Error creating post:', error)
       console.error('Error response:', error.response?.data)
@@ -114,15 +139,72 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated }) => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Tags (comma separated)
+              Additional Content <span className="text-xs text-gray-500">(Optional)</span>
             </label>
-            <input
-              type="text"
-              value={formData.tags}
-              onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-              className="input-field"
-              placeholder="e.g., React, Node.js, Machine Learning"
+            <textarea
+              value={formData.content}
+              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+              rows={3}
+              className="input-field resize-none"
+              placeholder="Add more detailed content, code snippets, or additional information..."
+              maxLength={5000}
             />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Category <span className="text-xs text-gray-500">(Optional)</span>
+              </label>
+              <input
+                type="text"
+                value={formData.category}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                className="input-field"
+                placeholder="e.g., Web Development, AI/ML, Mobile"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Tags (comma separated)
+              </label>
+              <input
+                type="text"
+                value={formData.tags}
+                onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                className="input-field"
+                placeholder="e.g., React, Node.js, Machine Learning"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                GitHub Repository <span className="text-xs text-gray-500">(Optional)</span>
+              </label>
+              <input
+                type="url"
+                value={formData.github_repo}
+                onChange={(e) => setFormData({ ...formData, github_repo: e.target.value })}
+                className="input-field"
+                placeholder="https://github.com/username/repo"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Live Demo URL <span className="text-xs text-gray-500">(Optional)</span>
+              </label>
+              <input
+                type="url"
+                value={formData.live_demo_url}
+                onChange={(e) => setFormData({ ...formData, live_demo_url: e.target.value })}
+                className="input-field"
+                placeholder="https://yourproject.com"
+              />
+            </div>
           </div>
 
           <div className="flex space-x-3 pt-4">
@@ -201,8 +283,51 @@ const PostCard = ({ post, onLike, onComment }) => {
 
       {/* Post Content */}
       <div className="mb-4">
-        <h2 className="text-xl font-bold text-gray-900 mb-2">{post.title}</h2>
-        <p className="text-gray-700 leading-relaxed">{post.description}</p>
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-xl font-bold text-gray-900">{post.title}</h2>
+          {post.category && (
+            <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-md">
+              {post.category}
+            </span>
+          )}
+        </div>
+        
+        <p className="text-gray-700 leading-relaxed mb-3">{post.description}</p>
+        
+        {/* Additional Content */}
+        {post.content && (
+          <div className="bg-gray-50 p-3 rounded-lg mb-3">
+            <p className="text-gray-800 text-sm whitespace-pre-wrap">{post.content}</p>
+          </div>
+        )}
+        
+        {/* Project Links */}
+        {(post.github_repo || post.live_demo_url) && (
+          <div className="flex flex-wrap gap-2 mb-3">
+            {post.github_repo && (
+              <a
+                href={post.github_repo}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center space-x-1 px-3 py-1.5 bg-gray-900 text-white text-sm rounded-md hover:bg-gray-800 transition-colors"
+              >
+                <span>💻</span>
+                <span>GitHub</span>
+              </a>
+            )}
+            {post.live_demo_url && (
+              <a
+                href={post.live_demo_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center space-x-1 px-3 py-1.5 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 transition-colors"
+              >
+                <span>🚀</span>
+                <span>Live Demo</span>
+              </a>
+            )}
+          </div>
+        )}
         
         {/* Tags */}
         {post.tags && post.tags.length > 0 && (

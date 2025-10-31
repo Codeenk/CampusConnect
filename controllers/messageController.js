@@ -16,7 +16,7 @@ const sendMessage = async (req, res) => {
       });
     }
 
-    const { receiverId, message } = req.body;
+    const { receiverId, message, message_type = 'text', attachments = [] } = req.body;
     const senderId = req.user.id;
 
     // Prevent sending message to self
@@ -47,7 +47,10 @@ const sendMessage = async (req, res) => {
       .insert({
         sender_id: senderId,
         receiver_id: receiverId,
-        message: message.trim()
+        message: message.trim(),
+        message_type: message_type,
+        attachments: Array.isArray(attachments) ? attachments : [],
+        status: 'sent'
       })
       .select(`
         *,
